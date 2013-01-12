@@ -1,0 +1,22 @@
+allowChangeGuild: true
+allowNoGuild: true
+allowGuildPVP: true
+allowBaseOnDeath: true
+allowGuildProtection: true
+allowDamageAnimationOnZero: true
+allowChatColor: true
+allowGuildPrefix: true
+allowChatFormat: true
+allowJoinPermissions: false
+allowJoinDefaultGuild: false
+allowColorConsole: true
+allowPickUpRestrictions: true
+allowOtherGuildWithinProtection: true
+setGuildProtectionBarrier: 50
+chatPrefix: '<'
+chatSuffix: '> '
+guildsColor: '&b'
+setBaseDelay: 0
+defaultGuild: 'test'
+allowGuildRestrictions: true
+allowGuildNameOnBroadcast: false

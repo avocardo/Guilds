@@ -1,0 +1,208 @@
+TEST:
+  settings:
+    prefix: 'AVO '
+    suffix: ''
+  attributes:
+    ATTACK_MELEE: 1.0
+    ATTACK_PROJECTILE: 1.0
+    DEFENSE_MELEE: 1.0
+    DEFENSE_PROJECTILE: 1.0
+    DEFENSE_FALL: 1.0
+    DEFENSE_SUFFOCATION: 1.0
+    DEFENSE_CONTACT: 1.0
+    DEFENSE_FIRE: 1.0
+    DEFENSE_LAVA: 1.0
+    DEFENSE_DROWNING: 1.0
+    DEFENSE_EXPLOSION: 1.0
+    DEFENSE_LIGHTNING: 1.0
+    DEFENSE_STARVATION: 1.0
+    DEFENSE_POISON: 1.0
+    DEFENSE_MAGIC: 1.0
+    DEFENSE_WITHER: 1.0
+    XP_MULTIPLIER: 1.0
+  proficiencies:
+    REFLECT:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    EXPLODEDEATH:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    INSTABREAK:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    POISONBLADE:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    FIREBLADE:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    FIREPUNCH:
+      Active: false
+      Power: 50
+      CoolDown: 50
+      Ticks: 500
+    FIREARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    LIGHTNINGARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    EXPLOSIVEARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    POISONARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    TPARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    BLINDNESSARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    CONFUSIONARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    STRAIGHTARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    ZOMBIEARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    MOBARROW:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    PEACEKEEPER:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    KNOCKBACK:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    MOBTARGET:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    FLIGHT:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    HIGHJUMP:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    SUNLIGHT:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    MOONLIGHT:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    STORM:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    WATERDAMAGE:
+      Active: true
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    LANDDAMAGE:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    RECOVERHEALTH:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    RECOVERITEMS:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    RECOVEREXP:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+    INVISIBLE:
+      Active: false
+      Power: 1
+      CoolDown: 0
+      Ticks: 0
+  worlds:
+    world: true
+  biomes:
+    SWAMPLAND: true
+    FOREST: true
+    TAIGA: true
+    DESERT: true
+    PLAINS: true
+    HELL: true
+    SKY: true
+    OCEAN: true
+    RIVER: true
+    EXTREME_HILLS: true
+    FROZEN_OCEAN: true
+    FROZEN_RIVER: true
+    ICE_PLAINS: true
+    ICE_MOUNTAINS: true
+    MUSHROOM_ISLAND: true
+    MUSHROOM_SHORE: true
+    BEACH: true
+    DESERT_HILLS: true
+    FOREST_HILLS: true
+    TAIGA_HILLS: true
+    SMALL_MOUNTAINS: true
+    JUNGLE: true
+    JUNGLE_HILLS: true
+  restrictions:
+  - 0
+  base:
+    world: world
+    x: 0
+    y: 0
+    z: 0
+    yaw: 0
+    pitch: 0

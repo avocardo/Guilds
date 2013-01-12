@@ -1,0 +1,80 @@
+name: GuildsBasic
+main: me.avocardo.guilds.GuildsBasic
+version: 2.2.3
+commands:
+  guilds:
+    description: Various commands for Guilds.
+    usage: /<command> <arg>
+  base:
+    description: TP to Base.
+    usage: /<command>
+permissions:
+    guilds.*:
+        description: Gives access to all guilds commands
+        children:
+            guilds.admin.kick: true
+            guilds.user.join: true
+            guilds.user.list: true
+            guilds.admin.add: true
+            guilds.admin.remove: true
+            guilds.admin.create: true
+            guilds.user.base: true
+            guilds.admin.setbase: true
+            guilds.admin.save: true
+            guilds.admin.load: true
+            guilds.user.leave: true
+            guilds.admin.protectionbarrier: true
+    guilds.admin.*:
+        description: Gives access to all guilds admin commands
+        children:
+            guilds.admin.kick: true
+            guilds.admin.add: true
+            guilds.admin.remove: true
+            guilds.admin.create: true
+            guilds.admin.setbase: true
+            guilds.admin.save: true
+            guilds.admin.load: true
+            guilds.admin.protectionbarrier: true
+    guilds.user.*:
+        description: Gives access to all guilds user commands
+        children:
+            guilds.user.join: true
+            guilds.user.base: true
+            guilds.user.list: true
+            guilds.user.leave: true
+    guilds.admin.kick:
+        description: Permission
+        default: op
+    guilds.admin.leave:
+        description: Permission
+        default: true
+    guilds.user.join:
+        description: Permission
+        default: true
+    guilds.admin.add:
+        description: Permission
+        default: op
+    guilds.admin.remove:
+        description: Permission
+        default: op
+    guilds.admin.create:
+        description: Permission
+        default: op
+    guilds.admin.setbase:
+        description: Permission
+        default: op
+    guilds.user.base:
+        description: Permission
+        default: true
+    guilds.admin.protectionbarrier:
+        description: Permission
+        default: op
+    guilds.admin.save:
+        description: Permission
+        default: op
+    guilds.admin.load:
+        description: Permission
+        default: op
+    guilds.user.list:
+        description: Permission
+        default: true
