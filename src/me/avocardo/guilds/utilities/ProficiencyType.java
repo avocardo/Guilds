@@ -2,9 +2,30 @@ package me.avocardo.guilds.utilities;
 
 public enum ProficiencyType {
 	
+	ATTACK_MELEE,
+	ATTACK_PROJECTILE,
+	DEFENSE_MELEE,
+	DEFENSE_PROJECTILE,
+	DEFENSE_FALL,
+	DEFENSE_SUFFOCATION,
+	DEFENSE_CONTACT,
+	DEFENSE_FIRE,
+	DEFENSE_LAVA,
+	DEFENSE_DROWNING,
+	DEFENSE_EXPLOSION,
+	DEFENSE_LIGHTNING,
+	DEFENSE_STARVATION,
+	DEFENSE_POISON,
+	DEFENSE_MAGIC,
+	DEFENSE_WITHER,
+	XP_MULTIPLIER,
+	TOOL_DURABILITY,
 	REFLECT,
 	EXPLODEDEATH,
-	INSTABREAK,
+	INSTA_MINE,
+	INSTA_DIG,
+	INSTA_SHEAR,
+	INSTA_AXE,
 	POISONBLADE,
 	FIREBLADE,
 	FIREPUNCH,
@@ -31,6 +52,137 @@ public enum ProficiencyType {
 	RECOVERHEALTH,
 	RECOVERITEMS,
 	RECOVEREXP,
-	INVISIBLE;
+	INVISIBLE,
+	ALTITUDE,
+	SWIMMER,
+	SPEED,
+	MAX_HEALTH,
+	OXYGEN,
+	SEE_INVISIBLE;
+	
+	public boolean wasAttribute() {
+		switch (this) {
+		case ATTACK_MELEE:
+		case ATTACK_PROJECTILE:
+		case DEFENSE_MELEE:
+		case DEFENSE_PROJECTILE:
+		case DEFENSE_FALL:
+		case DEFENSE_SUFFOCATION:
+		case DEFENSE_CONTACT:
+		case DEFENSE_FIRE:
+		case DEFENSE_LAVA:
+		case DEFENSE_DROWNING:
+		case DEFENSE_EXPLOSION:
+		case DEFENSE_LIGHTNING:
+		case DEFENSE_STARVATION:
+		case DEFENSE_POISON:
+		case DEFENSE_MAGIC:
+		case DEFENSE_WITHER:
+		case XP_MULTIPLIER:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	public boolean hasPower() {
+		switch (this) {
+		case ATTACK_MELEE:
+		case ATTACK_PROJECTILE:
+		case DEFENSE_MELEE:
+		case DEFENSE_PROJECTILE:
+		case DEFENSE_FALL:
+		case DEFENSE_SUFFOCATION:
+		case DEFENSE_CONTACT:
+		case DEFENSE_FIRE:
+		case DEFENSE_LAVA:
+		case DEFENSE_DROWNING:
+		case DEFENSE_EXPLOSION:
+		case DEFENSE_LIGHTNING:
+		case DEFENSE_STARVATION:
+		case DEFENSE_POISON:
+		case DEFENSE_MAGIC:
+		case DEFENSE_WITHER:
+		case XP_MULTIPLIER:
+		case REFLECT:
+		case EXPLODEDEATH:
+		case EXPLOSIVEARROW:
+		case KNOCKBACK:
+		case FLIGHT:
+		case HIGHJUMP:
+		case SUNLIGHT:
+		case MOONLIGHT:
+		case STORM:
+		case WATERDAMAGE:
+		case LANDDAMAGE:
+		case ALTITUDE:
+		case SWIMMER:
+		case SPEED:
+		case MAX_HEALTH:
+		case OXYGEN:
+		case TOOL_DURABILITY:
+		case INVISIBLE:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	public boolean hasCoolDown() {
+		switch (this) {
+		case REFLECT:
+		case POISONBLADE:
+		case FIREBLADE:
+		case FIREPUNCH:
+		case FIREARROW:
+		case LIGHTNINGARROW:
+		case EXPLOSIVEARROW:
+		case POISONARROW:
+		case TPARROW:
+		case BLINDNESSARROW:
+		case CONFUSIONARROW:
+		case STRAIGHTARROW:
+		case ZOMBIEARROW:
+		case MOBARROW:
+		case KNOCKBACK:
+		case MOBTARGET:
+		case INVISIBLE:
+		case INSTA_MINE:
+		case INSTA_DIG:
+		case INSTA_SHEAR:
+		case INSTA_AXE:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	public boolean hasTicks() {
+		switch (this) {
+		case POISONBLADE:
+		case FIREBLADE:
+		case FIREPUNCH:
+		case FIREARROW:
+		case POISONARROW:
+		case BLINDNESSARROW:
+		case CONFUSIONARROW:
+		case INSTA_MINE:
+		case INSTA_DIG:
+		case INSTA_SHEAR:
+		case INSTA_AXE:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	public boolean hasMinMax() {
+		switch (this) {
+		case ALTITUDE:
+			return true;
+		default:
+			return false;
+		}
+	}
 	
 }

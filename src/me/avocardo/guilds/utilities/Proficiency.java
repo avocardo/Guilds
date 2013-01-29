@@ -1,26 +1,30 @@
 package me.avocardo.guilds.utilities;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.bukkit.entity.Player;
+import me.avocardo.guilds.GuildsBasic;
+import me.avocardo.guilds.User;
+import me.avocardo.guilds.messages.Message;
+import me.avocardo.guilds.messages.MessageType;
 
 public class Proficiency {
 
+	private GuildsBasic GuildsBasic;
 	private ProficiencyType ProficiencyType;
 	private boolean Active;
 	private double Power;
 	private long CoolDown;
 	private int Ticks;
-	
-	private Map <Player, Long> PlayerCoolDown = new HashMap <Player, Long>();
-	
-	public Proficiency(ProficiencyType ProficiencyType, boolean Active, double Power, long CoolDown, int Ticks) {
+	private int Minimum;
+	private int Maximum;
+
+	public Proficiency(ProficiencyType ProficiencyType, boolean Active, double Power, long CoolDown, int Ticks, int Minimum, int Maximum, int Item, GuildsBasic GuildsBasic) {
+		this.GuildsBasic = GuildsBasic;
 		this.ProficiencyType = ProficiencyType;
 		this.Active = Active;
 		this.Power = Power;
 		this.CoolDown = CoolDown;
 		this.Ticks = Ticks;
+		this.setMinimum(Minimum);
+		this.setMaximum(Maximum);
 	}
 	
 	public ProficiencyType getProficiencyType() {
@@ -59,28 +63,46 @@ public class Proficiency {
 		this.Ticks = Ticks;
 	}
 	
-	public void setUseProficiency(Player p) {
-		if (PlayerCoolDown.containsKey(p))
-			PlayerCoolDown.remove(p);
-		PlayerCoolDown.put(p, System.currentTimeMillis());
+	public void setUseProficiency(User u) {
+		if (u.ProficiencyCoolDown.containsKey(this.ProficiencyType))
+			u.ProficiencyCoolDown.remove(this.ProficiencyType);
+		u.ProficiencyCoolDown.put(this.ProficiencyType, System.currentTimeMillis());
 	}
 	
-	public boolean getUseProficiency(Player p) {
-		if (PlayerCoolDown.containsKey(p)) {
-			if ((System.currentTimeMillis() - PlayerCoolDown.get(p)) < Ticks) {
+	public boolean getUseProficiency(User u) {
+		if (!ProficiencyType.hasCoolDown()) return true;
+		if (CoolDown == 0) return true;
+		if (u.ProficiencyCoolDown.containsKey(this.ProficiencyType)) {
+			if ((System.currentTimeMillis() - u.ProficiencyCoolDown.get(this.ProficiencyType)) < Ticks) {
 				return true; // Still Active
-			} else if ((System.currentTimeMillis() - PlayerCoolDown.get(p)) < (Ticks + CoolDown)) {
-				//MESSAGE HERE
+			} else if ((System.currentTimeMillis() - u.ProficiencyCoolDown.get(this.ProficiencyType)) < (Ticks + CoolDown)) {
+				new Message(MessageType.COOLDOWN, u.getPlayer(), ProficiencyType, GuildsBasic);
 				return false; // Cooling Down
 			} else {
-				setUseProficiency(p);
+				setUseProficiency(u);
 				return true; // Reactivate
 			}
 		} else {
-			setUseProficiency(p);
+			setUseProficiency(u);
 			return true; // Activate
 		}
 		
+	}
+
+	public int getMinimum() {
+		return Minimum;
+	}
+
+	public void setMinimum(int minimum) {
+		Minimum = minimum;
+	}
+
+	public int getMaximum() {
+		return Maximum;
+	}
+
+	public void setMaximum(int maximum) {
+		Maximum = maximum;
 	}
 	
 }

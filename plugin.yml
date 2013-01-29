@@ -1,6 +1,6 @@
 name: GuildsBasic
 main: me.avocardo.guilds.GuildsBasic
-version: 2.2.3
+version: 2.2.6
 commands:
   guilds:
     description: Various commands for Guilds.

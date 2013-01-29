@@ -5,11 +5,13 @@ import java.util.List;
 
 import me.avocardo.guilds.Guild;
 import me.avocardo.guilds.GuildsBasic;
-import me.avocardo.guilds.utilities.Attribute;
-import me.avocardo.guilds.utilities.AttributeType;
+import me.avocardo.guilds.User;
+import me.avocardo.guilds.messages.Message;
+import me.avocardo.guilds.messages.MessageType;
 import me.avocardo.guilds.utilities.Proficiency;
 import me.avocardo.guilds.utilities.ProficiencyType;
 import me.avocardo.guilds.utilities.Scheduler;
+import me.avocardo.guilds.utilities.Settings;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
@@ -17,6 +19,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
@@ -29,6 +32,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -37,63 +41,106 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityTargetEvent.TargetReason;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
 public class PlayerListener implements Listener {
 
-	private GuildsBasic plugin;
+	private GuildsBasic GuildsBasic;
 
-	public PlayerListener(GuildsBasic plugin) {
-		
-		this.plugin = plugin;
-        
+	public PlayerListener(GuildsBasic GuildsBasic) {
+		this.GuildsBasic = GuildsBasic;
     }
+	
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		Player p = event.getPlayer();
+		GuildsBasic.PlayerUser.put(p, new User(p));
+		Guild g = GuildsBasic.getPlayerGuild(p);
+		World w = p.getWorld();
+		Biome b = p.getLocation().getBlock().getBiome();
+		if (g != null) {
+			if (g.getWorlds().contains(w) && g.getBiomes().contains(b)) {
+				Proficiency MAX_HEALTH = g.getProficiency(ProficiencyType.MAX_HEALTH);
+				if (MAX_HEALTH.getActive()) {
+					if (MAX_HEALTH.getPower() < 20 && MAX_HEALTH.getPower() > 0) {
+						if (p.getHealth() > (int) MAX_HEALTH.getPower()) {
+							p.setHealth((int) MAX_HEALTH.getPower());
+						}
+					}
+				}
+			}
+		}
+	}
+		
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onPlayerChangeWorld(PlayerChangedWorldEvent event) {
+		Player p = event.getPlayer();
+		Guild g = GuildsBasic.getPlayerGuild(p);
+		World w = p.getWorld();
+		Biome b = p.getLocation().getBlock().getBiome();
+		if (g != null) {
+			if (g.getWorlds().contains(w) && g.getBiomes().contains(b)) {
+				Proficiency MAX_HEALTH = g.getProficiency(ProficiencyType.MAX_HEALTH);
+				if (MAX_HEALTH.getActive()) {
+					if (MAX_HEALTH.getPower() < 20 && MAX_HEALTH.getPower() > 0) {
+						if (p.getHealth() > (int) MAX_HEALTH.getPower()) {
+							p.setHealth((int) MAX_HEALTH.getPower());
+						}
+					}
+				}
+			}
+		}
+	}
  	
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player p = event.getPlayer();
-		if (plugin.setBaseDelay > 0) {
-			if (plugin.BaseDelay.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(plugin.BaseDelay.get(p));
-				plugin.BaseDelay.remove(p);
+		if (GuildsBasic.getIntSetting(Settings.SET_BASE_TP_DELAY) > 0) {
+			if (GuildsBasic.BaseDelay.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(GuildsBasic.BaseDelay.get(p));
+				GuildsBasic.BaseDelay.remove(p);
 			}
 		}
+		if (GuildsBasic.PlayerUser.containsKey(p))
+			GuildsBasic.PlayerUser.remove(p);
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void onPlayerKick(PlayerKickEvent event) {
 		Player p = event.getPlayer();
-		if (plugin.setBaseDelay > 0) {
-			if (plugin.BaseDelay.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(plugin.BaseDelay.get(p));
-				plugin.BaseDelay.remove(p);
+		if (GuildsBasic.getIntSetting(Settings.SET_BASE_TP_DELAY) > 0) {
+			if (GuildsBasic.BaseDelay.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(GuildsBasic.BaseDelay.get(p));
+				GuildsBasic.BaseDelay.remove(p);
 			}
 		}
+		if (GuildsBasic.PlayerUser.containsKey(p))
+			GuildsBasic.PlayerUser.remove(p);
 	}
 	
-	@EventHandler(priority = EventPriority.NORMAL)
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onMobTarget(EntityTargetEvent event) {
 
-		if (event.isCancelled()) {
-            return;
-        }
-		
 		if (event.getTarget() instanceof Player) {
 			if (event.getEntity() instanceof LivingEntity) {
 				Player p = (Player) event.getTarget();
-				Guild g = plugin.getPlayerGuild(p);
+				Guild g = GuildsBasic.getPlayerGuild(p);
 				if (g != null) {
 					if (g.getWorlds().contains(p.getWorld()) && g.getBiomes().contains(p.getLocation().getBlock().getBiome())) {
 						Proficiency MOBTARGET = g.getProficiency(ProficiencyType.MOBTARGET);
@@ -114,15 +161,15 @@ public class PlayerListener implements Listener {
 
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void onInventoryClose(InventoryCloseEvent event) {
-
-		if (!plugin.allowGuildRestrictions) {
+		
+		if (!GuildsBasic.getEnabled(Settings.ENABLE_RESTRICTIONS)) {
 			return;
 		}
 		
 		if (event.getView().getType().equals(InventoryType.CRAFTING)) {
 		
 			Player p = (Player) event.getPlayer();
-			Guild g = plugin.getPlayerGuild(p);
+			Guild g = GuildsBasic.getPlayerGuild(p);
 			
 			if (g != null) {
 				World w = p.getWorld();
@@ -135,7 +182,7 @@ public class PlayerListener implements Listener {
 								p.getWorld().dropItem(p.getLocation(), p.getInventory().getItemInHand());
 								p.getInventory().setItem(p.getInventory().getHeldItemSlot(), new ItemStack(0));
 								p.setItemInHand(new ItemStack(0));
-								plugin.msg(39, p, "", "");
+								new Message(MessageType.ITEM_RESTRICTED, p, GuildsBasic);
 							}
 						}
 						if(inv.getHelmet() != null) {
@@ -147,7 +194,7 @@ public class PlayerListener implements Listener {
 				    				p.getWorld().dropItem(p.getLocation(), inv.getHelmet());
 				    				inv.setHelmet(null);
 				    			}
-								plugin.msg(11, p, "", "");
+								new Message(MessageType.ARMOUR_RESTRICTED, p, GuildsBasic);
 							}
 						}
 						if(inv.getChestplate() != null) {
@@ -159,7 +206,7 @@ public class PlayerListener implements Listener {
 				    				p.getWorld().dropItem(p.getLocation(), inv.getChestplate());
 				    				inv.setChestplate(null);
 				    			}
-								plugin.msg(11, p, "", "");
+								new Message(MessageType.ARMOUR_RESTRICTED, p, GuildsBasic);
 							}
 						}
 						if(inv.getLeggings() != null) {
@@ -171,7 +218,7 @@ public class PlayerListener implements Listener {
 				    				p.getWorld().dropItem(p.getLocation(), inv.getLeggings());
 				    				inv.setLeggings(null);
 				    			}
-								plugin.msg(11, p, "", "");
+								new Message(MessageType.ARMOUR_RESTRICTED, p, GuildsBasic);
 							}
 						}
 						if(inv.getBoots() != null) {
@@ -183,7 +230,7 @@ public class PlayerListener implements Listener {
 				    				p.getWorld().dropItem(p.getLocation(), inv.getBoots());
 				    				inv.setBoots(null);
 				    			}
-								plugin.msg(11, p, "", "");
+								new Message(MessageType.ARMOUR_RESTRICTED, p, GuildsBasic);
 							}
 						}
 					}
@@ -196,32 +243,37 @@ public class PlayerListener implements Listener {
 		
 	}
 	
-	@EventHandler(priority = EventPriority.NORMAL)
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onPlayerHealth(EntityRegainHealthEvent event) {
 		
-		if (event.isCancelled()) {
-            return;
-        }
-		
 		if (event.getEntity() instanceof Player) {
+			
 			Player p = (Player) event.getEntity();
-			Guild g = plugin.getPlayerGuild(p);
+			Guild g = GuildsBasic.getPlayerGuild(p);
 			World w = p.getWorld();
 			Biome b = p.getLocation().getBlock().getBiome();
 			if (g != null) {
 				if (g.getWorlds().contains(w) && g.getBiomes().contains(b)) {
 					Proficiency RECOVERHEALTH = g.getProficiency(ProficiencyType.RECOVERHEALTH);
-					if (RECOVERHEALTH.getActive()) {
-						return;
-					} else {
-						event.setCancelled(true);
-						return;
+					Proficiency MAX_HEALTH = g.getProficiency(ProficiencyType.MAX_HEALTH);
+					if (event.getRegainReason() == RegainReason.REGEN || event.getRegainReason() == RegainReason.SATIATED) {
+						if (!RECOVERHEALTH.getActive()) {
+							event.setCancelled(true);
+							return;
+						}
+					}
+					if (MAX_HEALTH.getActive()) {
+						if (MAX_HEALTH.getPower() < 20 && MAX_HEALTH.getPower() > 0) {
+							if ((p.getHealth() + event.getAmount()) > (int) MAX_HEALTH.getPower()) {
+								event.setCancelled(true);
+								return;
+							}
+						}
 					}
 				}
 			}
+			
 		}
-		
-		return;
 		
 	}
 	
@@ -230,18 +282,20 @@ public class PlayerListener implements Listener {
 
 		Player p = event.getPlayer();
 		
-		Guild g = plugin.getPlayerGuild(p);
+		Guild g = GuildsBasic.getPlayerGuild(p);
 		
 		if (g != null) {
 			if (g.getWorlds().contains(p.getWorld()) && g.getBiomes().contains(p.getLocation().getBlock().getBiome())) {
-				Attribute XP_MULTIPLIER = g.getAttribute(AttributeType.XP_MULTIPLIER);
-				if (XP_MULTIPLIER.getPower() != (double) 1) {
-					if (XP_MULTIPLIER.getPower() == 0) {
-						event.setAmount(0);
-						return;
-					} else {
-						event.setAmount((int) Math.round((double) event.getAmount() * XP_MULTIPLIER.getPower()));
-						return;
+				Proficiency XP_MULTIPLIER = g.getProficiency(ProficiencyType.XP_MULTIPLIER);
+				if (XP_MULTIPLIER.getActive()) {
+					if (XP_MULTIPLIER.getPower() != (double) 1) {
+						if (XP_MULTIPLIER.getPower() == 0) {
+							event.setAmount(0);
+							return;
+						} else {
+							event.setAmount((int) Math.round((double) event.getAmount() * XP_MULTIPLIER.getPower()));
+							return;
+						}
 					}
 				}
 			}
@@ -253,29 +307,42 @@ public class PlayerListener implements Listener {
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
 
 		Player p = event.getPlayer();
+		User u = GuildsBasic.getPlayerUser(p);
+		Guild g = GuildsBasic.getPlayerGuild(p);
 		
-		if (plugin.Inventory.containsKey(p)) {
-			for (ItemStack i : plugin.Inventory.get(p)) {
+		if (u.Inventory.containsKey(p)) {
+			for (ItemStack i : u.Inventory.get(p)) {
 				p.getInventory().addItem(i);
 			}
-			plugin.Inventory.remove(p);
+			u.Inventory.remove(p);
 		}
 		
-		if (plugin.setBaseDelay > 0) {
-			if (plugin.BaseDelay.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(plugin.BaseDelay.get(p));
-				plugin.BaseDelay.remove(p);
+		if (GuildsBasic.getIntSetting(Settings.SET_BASE_TP_DELAY) > 0) {
+			if (GuildsBasic.BaseDelay.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(GuildsBasic.BaseDelay.get(p));
+				GuildsBasic.BaseDelay.remove(p);
 			}
 		}
 		
-		if (plugin.allowBaseOnDeath) {
-		
-			Guild g = plugin.getPlayerGuild(p);
-		
+		if (GuildsBasic.getEnabled(Settings.ENABLE_BASE_ON_DEATH)) {
 			if (g != null) {
-				event.setRespawnLocation(g.getBase());
+				if (g.getWorlds().contains(p.getLocation().getWorld())) {
+					event.setRespawnLocation(g.getBase());
+				}
 			}
-			
+		}
+		
+		if (g != null) {
+			if (g.getWorlds().contains(p.getWorld())) {
+				Proficiency MAX_HEALTH = g.getProficiency(ProficiencyType.MAX_HEALTH);
+				if (MAX_HEALTH.getActive()) {
+					if (MAX_HEALTH.getPower() < 20 && MAX_HEALTH.getPower() > 0) {
+						if (p.getHealth() > (int) MAX_HEALTH.getPower()) {
+							p.setHealth((int) MAX_HEALTH.getPower());
+						}
+					}
+				}
+			}
 		}
 
 	}
@@ -285,13 +352,14 @@ public class PlayerListener implements Listener {
 		
 		if (event.getEntity() instanceof Player) {
 			Player p = event.getEntity();
-			if (plugin.setBaseDelay > 0) {
-				if (plugin.BaseDelay.containsKey(p)) {
-					Bukkit.getScheduler().cancelTask(plugin.BaseDelay.get(p));
-					plugin.BaseDelay.remove(p);
+			User u = GuildsBasic.getPlayerUser(p);
+			if (GuildsBasic.getIntSetting(Settings.SET_BASE_TP_DELAY) > 0) {
+				if (GuildsBasic.BaseDelay.containsKey(p)) {
+					Bukkit.getScheduler().cancelTask(GuildsBasic.BaseDelay.get(p));
+					GuildsBasic.BaseDelay.remove(p);
 				}
 			}
-			Guild g = plugin.getPlayerGuild(p);
+			Guild g = GuildsBasic.getPlayerGuild(p);
 			World w = p.getWorld();
 			Biome b = p.getLocation().getBlock().getBiome();
 			if (g != null) {
@@ -307,62 +375,85 @@ public class PlayerListener implements Listener {
 						event.setDroppedExp(0);
 					}
 					if (RECOVERITEMS.getActive()) {
-						plugin.Inventory.put(p, event.getDrops());
+						u.Inventory.put(p, event.getDrops());
 						event.getDrops().clear();
 					}
 				}
 			}
-			if (plugin.TasksWater.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(plugin.TasksWater.get(p));
-				plugin.TasksWater.remove(p);
+			if (GuildsBasic.TasksWater.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(GuildsBasic.TasksWater.get(p));
+				GuildsBasic.TasksWater.remove(p);
 			}
-			if (plugin.TasksLand.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(plugin.TasksLand.get(p));
-				plugin.TasksLand.remove(p);
+			if (GuildsBasic.TasksLand.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(GuildsBasic.TasksLand.get(p));
+				GuildsBasic.TasksLand.remove(p);
 			}
-			if (plugin.TasksSun.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(plugin.TasksSun.get(p));
-				plugin.TasksSun.remove(p);
+			if (GuildsBasic.TasksSun.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(GuildsBasic.TasksSun.get(p));
+				GuildsBasic.TasksSun.remove(p);
 			}
-			if (plugin.TasksMoon.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(plugin.TasksMoon.get(p));
-				plugin.TasksMoon.remove(p);
+			if (GuildsBasic.TasksMoon.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(GuildsBasic.TasksMoon.get(p));
+				GuildsBasic.TasksMoon.remove(p);
 			}
-			if (plugin.TasksStorm.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(plugin.TasksStorm.get(p));
-				plugin.TasksStorm.remove(p);
+			if (GuildsBasic.TasksStorm.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(GuildsBasic.TasksStorm.get(p));
+				GuildsBasic.TasksStorm.remove(p);
+			}
+			if (GuildsBasic.TasksAltitude.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(GuildsBasic.TasksAltitude.get(p));
+				GuildsBasic.TasksAltitude.remove(p);
 			}
 		}
 		
 		return;
 		
 	}
-	
-	@EventHandler(priority = EventPriority.NORMAL)
-	public void onPlayerMove(PlayerMoveEvent event) {
-				
-		if (event.isCancelled()) {
-            return;
-        }
+		
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+	public void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
 		
 		Player p = event.getPlayer();
-		Guild g = plugin.getPlayerGuild(p);
+		Guild g = GuildsBasic.getPlayerGuild(p);
+		User u = GuildsBasic.getPlayerUser(p);
 		
 		if (g != null) {
-			if (plugin.TasksInvisible.containsKey(p)) {
-				if (!p.isSneaking()) {
-					Bukkit.getScheduler().cancelTask(plugin.TasksInvisible.get(p));
-					plugin.TasksInvisible.remove(p);
-					plugin.showPlayer(p);
+			if (event.isSneaking()) {
+				World w = p.getWorld();
+				Biome b = p.getLocation().getBlock().getBiome();
+				if (g.getWorlds().contains(w) && g.getBiomes().contains(b)) {
+					Proficiency INVISIBLE = g.getProficiency(ProficiencyType.INVISIBLE);
+					if (INVISIBLE.getActive()) {
+						if (INVISIBLE.getUseProficiency(u)) {
+							GuildsBasic.hidePlayer(p);
+						}
+					}
+				}
+			} else {
+				if (GuildsBasic.TasksInvisible.containsKey(p)) {
+					Bukkit.getScheduler().cancelTask(GuildsBasic.TasksInvisible.get(p));
+					GuildsBasic.TasksInvisible.remove(p);
+					GuildsBasic.showPlayer(p);
 				}
 			}
-			if (!plugin.allowOtherGuildWithinProtection) {
-				for (Guild guild : plugin.GuildsList) {
+		}
+		
+	}
+	
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+	public void onPlayerMove(PlayerMoveEvent event) {
+		
+		Player p = event.getPlayer();
+		Guild g = GuildsBasic.getPlayerGuild(p);
+		
+		if (g != null) {
+			if (!GuildsBasic.getEnabled(Settings.ENABLE_ENEMY_ENTER_PROTECTION_BARRIER)) {
+				for (Guild guild : GuildsBasic.GuildsList) {
 					if (!guild.equals(g)) {
 						if (event.getFrom().distance(guild.getBase()) > event.getTo().distance(guild.getBase())) {
-							if (p.getLocation().distance(guild.getBase()) <= (plugin.setGuildProtectionBarrier + 1)) {
+							if (p.getLocation().distance(guild.getBase()) <= (GuildsBasic.getIntSetting(Settings.SET_PROTECTION_BARRIER) + 1)) {
 								event.setCancelled(true);
-								plugin.msg(40, p, "", guild.getName());
+								new Message(MessageType.PROTECTED_BARRIER_WARNING, p, g, GuildsBasic);
 								return;
 							}
 						}
@@ -380,87 +471,109 @@ public class PlayerListener implements Listener {
 				Proficiency STORM = g.getProficiency(ProficiencyType.STORM);
 				Proficiency WATERDAMAGE = g.getProficiency(ProficiencyType.WATERDAMAGE);
 				Proficiency LANDDAMAGE = g.getProficiency(ProficiencyType.LANDDAMAGE);
-				Proficiency INVISIBLE = g.getProficiency(ProficiencyType.INVISIBLE);
-				if (FLIGHT.getActive()) {
-					if (p.isSneaking()) p.setVelocity(p.getLocation().getDirection().multiply(FLIGHT.getPower()));
-				}
-				if (INVISIBLE.getActive()) {
-					if (p.isSneaking()) {
-						plugin.hidePlayer(p);
-					}
-				}
+				Proficiency ALTITUDE = g.getProficiency(ProficiencyType.ALTITUDE);
+				Proficiency SWIMMER = g.getProficiency(ProficiencyType.SWIMMER);
+				Proficiency SPEED = g.getProficiency(ProficiencyType.SPEED);
+				Proficiency OXYGEN = g.getProficiency(ProficiencyType.OXYGEN);
 				if (FLIGHT.getActive()) {
 					if (p.isSneaking()) p.setVelocity(p.getLocation().getDirection().multiply(FLIGHT.getPower()));
 				}
 				if (HIGHJUMP.getActive()) {
 					p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 10, (int) HIGHJUMP.getPower()));
 				}
+				if (OXYGEN.getActive()) {
+					if (p.getLocation().getBlock().getType().equals(Material.STATIONARY_WATER) || p.getLocation().add(0, 1, 0).getBlock().getType().equals(Material.STATIONARY_WATER)) {
+						p.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, 10, (int) OXYGEN.getPower()));
+					}
+				}
+				if (SPEED.getActive()) {
+					p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 10, (int) SPEED.getPower()));
+				}
+				if (SWIMMER.getActive()) {
+					if (p.getLocation().getBlock().getType() == Material.STATIONARY_WATER || p.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() == Material.STATIONARY_WATER) {
+						Vector dir = p.getLocation().getDirection();
+						Vector vec = new Vector(dir.getX() * 0.4D, 0, dir.getZ() * 0.4D);
+						p.setVelocity(vec);
+					}
+				}
 				if (SUNLIGHT.getActive()) {
 					if (time > 0 && time < 13000) {
 						if ((p.getWorld().getBlockAt(p.getLocation()).getLightFromSky()) > 8) {
-							if (!plugin.TasksSun.containsKey(p)) {
-								plugin.TasksSun.put(p, new Scheduler(plugin).sun(p));
+							if (!GuildsBasic.TasksSun.containsKey(p)) {
+								GuildsBasic.TasksSun.put(p, new Scheduler(GuildsBasic).sun(p));
 							}
 						} else {
-							if (plugin.TasksSun.containsKey(p)) {
-								Bukkit.getScheduler().cancelTask(plugin.TasksSun.get(p));
-								plugin.TasksSun.remove(p);
+							if (GuildsBasic.TasksSun.containsKey(p)) {
+								Bukkit.getScheduler().cancelTask(GuildsBasic.TasksSun.get(p));
+								GuildsBasic.TasksSun.remove(p);
 							}
 						}
 					} else {
-						if (plugin.TasksSun.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(plugin.TasksSun.get(p));
-							plugin.TasksSun.remove(p);
+						if (GuildsBasic.TasksSun.containsKey(p)) {
+							Bukkit.getScheduler().cancelTask(GuildsBasic.TasksSun.get(p));
+							GuildsBasic.TasksSun.remove(p);
 						}
 					}
 				}
 				if (MOONLIGHT.getActive()) {
 					if (time > 13000 && time < 23000) {
 						if ((p.getWorld().getBlockAt(p.getLocation()).getLightFromSky()) > 8) {
-							if (!plugin.TasksMoon.containsKey(p)) {
-								plugin.TasksMoon.put(p, new Scheduler(plugin).moon(p));
+							if (!GuildsBasic.TasksMoon.containsKey(p)) {
+								GuildsBasic.TasksMoon.put(p, new Scheduler(GuildsBasic).moon(p));
 							}
 						} else {
-							if (plugin.TasksMoon.containsKey(p)) {
-								Bukkit.getScheduler().cancelTask(plugin.TasksMoon.get(p));
-								plugin.TasksMoon.remove(p);
+							if (GuildsBasic.TasksMoon.containsKey(p)) {
+								Bukkit.getScheduler().cancelTask(GuildsBasic.TasksMoon.get(p));
+								GuildsBasic.TasksMoon.remove(p);
 							}
 						}
 					} else {
-						if (plugin.TasksMoon.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(plugin.TasksMoon.get(p));
-							plugin.TasksMoon.remove(p);
+						if (GuildsBasic.TasksMoon.containsKey(p)) {
+							Bukkit.getScheduler().cancelTask(GuildsBasic.TasksMoon.get(p));
+							GuildsBasic.TasksMoon.remove(p);
 						}
 					}
 				}
 				if (STORM.getActive()) {
 					if ((p.getWorld().getBlockAt(p.getLocation()).getLightFromSky()) > 8) {
 						if (p.getWorld().hasStorm() == true) {
-							if (!plugin.TasksStorm.containsKey(p)) {
-								plugin.TasksStorm.put(p, new Scheduler(plugin).storm(p));
+							if (!GuildsBasic.TasksStorm.containsKey(p)) {
+								GuildsBasic.TasksStorm.put(p, new Scheduler(GuildsBasic).storm(p));
 							}
 						} else {
-							if (plugin.TasksStorm.containsKey(p)) {
-								Bukkit.getScheduler().cancelTask(plugin.TasksStorm.get(p));
-								plugin.TasksStorm.remove(p);
+							if (GuildsBasic.TasksStorm.containsKey(p)) {
+								Bukkit.getScheduler().cancelTask(GuildsBasic.TasksStorm.get(p));
+								GuildsBasic.TasksStorm.remove(p);
 							}
 						}
 					} else {
-						if (plugin.TasksStorm.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(plugin.TasksStorm.get(p));
-							plugin.TasksStorm.remove(p);
+						if (GuildsBasic.TasksStorm.containsKey(p)) {
+							Bukkit.getScheduler().cancelTask(GuildsBasic.TasksStorm.get(p));
+							GuildsBasic.TasksStorm.remove(p);
 						}
 					}
 				}
 				if (WATERDAMAGE.getActive()) {
 					if (p.getLocation().getBlock().getTypeId() == 8 || p.getLocation().getBlock().getTypeId() == 9) {
-						if (!plugin.TasksWater.containsKey(p)) {
-							plugin.TasksWater.put(p, new Scheduler(plugin).water(p));
+						if (!GuildsBasic.TasksWater.containsKey(p)) {
+							GuildsBasic.TasksWater.put(p, new Scheduler(GuildsBasic).water(p));
 						}
 					} else {
-						if (plugin.TasksWater.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(plugin.TasksWater.get(p));
-							plugin.TasksWater.remove(p);
+						if (GuildsBasic.TasksWater.containsKey(p)) {
+							Bukkit.getScheduler().cancelTask(GuildsBasic.TasksWater.get(p));
+							GuildsBasic.TasksWater.remove(p);
+						}
+					}
+				}
+				if (ALTITUDE.getActive()) {
+					if (p.getLocation().getBlockY() > ALTITUDE.getMaximum() || p.getLocation().getBlockY() < ALTITUDE.getMinimum()) {
+						if (!GuildsBasic.TasksAltitude.containsKey(p)) {
+							GuildsBasic.TasksAltitude.put(p, new Scheduler(GuildsBasic).altitude(p));
+						}
+					} else {
+						if (GuildsBasic.TasksAltitude.containsKey(p)) {
+							Bukkit.getScheduler().cancelTask(GuildsBasic.TasksAltitude.get(p));
+							GuildsBasic.TasksAltitude.remove(p);
 						}
 					}
 				}
@@ -473,23 +586,23 @@ public class PlayerListener implements Listener {
 					blocks.add(p.getLocation().subtract(0, 1, 0).getBlock().getTypeId());
 					
 					if (blocks.contains(8) == false && blocks.contains(9) == false) {
-						if (!plugin.TasksLand.containsKey(p)) {
-							plugin.TasksLand.put(p, new Scheduler(plugin).land(p));
+						if (!GuildsBasic.TasksLand.containsKey(p)) {
+							GuildsBasic.TasksLand.put(p, new Scheduler(GuildsBasic).land(p));
 						}
 					} else {
-						if (plugin.TasksLand.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(plugin.TasksLand.get(p));
-							plugin.TasksLand.remove(p);
+						if (GuildsBasic.TasksLand.containsKey(p)) {
+							Bukkit.getScheduler().cancelTask(GuildsBasic.TasksLand.get(p));
+							GuildsBasic.TasksLand.remove(p);
 						}
 					}
 				}
 			}
 		} else {
-			if (!plugin.allowNoGuild) {
+			if (!GuildsBasic.getEnabled(Settings.ENABLE_NO_GUILD)) {
 				if (event.getFrom().getX() != event.getTo().getX() || event.getFrom().getZ() != event.getTo().getZ()) {
 					event.setTo(event.getFrom());
-					plugin.msg(12, p, "", "");
-					plugin.msg(13, p, "", "");
+					new Message(MessageType.MUST_JOIN_GUILD, p, GuildsBasic);
+					new Message(MessageType.JOIN_COMMAND, p, GuildsBasic);
 					return;
 				}
 			}
@@ -499,7 +612,7 @@ public class PlayerListener implements Listener {
 		
 	}
 	
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.NORMAL)
 	public void onProjectileHit(ProjectileHitEvent event) {
 
 		Entity entity = event.getEntity();
@@ -509,7 +622,8 @@ public class PlayerListener implements Listener {
 			Entity shooter = arrow.getShooter();
 			if (shooter instanceof Player) {
 		        Player p = (Player) shooter;
-		       	Guild g = plugin.getPlayerGuild(p);
+		       	Guild g = GuildsBasic.getPlayerGuild(p);
+		       	User u = GuildsBasic.getPlayerUser(p);
 		        if (g != null) {
 		        	World w = p.getWorld();
 					Biome b = p.getLocation().getBlock().getBiome();
@@ -520,16 +634,16 @@ public class PlayerListener implements Listener {
 						Proficiency LIGHTNINGARROW = g.getProficiency(ProficiencyType.LIGHTNINGARROW);
 						Proficiency TPARROW = g.getProficiency(ProficiencyType.TPARROW);
 		        		if (EXPLOSIVEARROW.getActive()) {
-		        			if (EXPLOSIVEARROW.getUseProficiency(p)) w.createExplosion(loc, (int) EXPLOSIVEARROW.getPower());                		
+		        			if (EXPLOSIVEARROW.getUseProficiency(u)) w.createExplosion(loc, (int) EXPLOSIVEARROW.getPower());                		
 	                	}
 		        		if (ZOMBIEARROW.getActive()) {
-		        			if (ZOMBIEARROW.getUseProficiency(p)) w.spawnEntity(loc, EntityType.ZOMBIE);
+		        			if (ZOMBIEARROW.getUseProficiency(u)) w.spawnEntity(loc, EntityType.ZOMBIE);
 	                	}
 	                	if (LIGHTNINGARROW.getActive()) {
-	                		if (LIGHTNINGARROW.getUseProficiency(p)) w.strikeLightning(loc);
+	                		if (LIGHTNINGARROW.getUseProficiency(u)) w.strikeLightning(loc);
 	                	}
 	                	if (TPARROW.getActive()) {
-	                		if (TPARROW.getUseProficiency(p)) p.teleport(loc);
+	                		if (TPARROW.getUseProficiency(u)) p.teleport(loc);
 	                	}
 		        	}
 		        }
@@ -540,21 +654,17 @@ public class PlayerListener implements Listener {
 		
 	}
 
-	@EventHandler(priority = EventPriority.NORMAL)
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
-		
-		if (event.isCancelled()) {
-            return;
-        }
-		
-		if (!plugin.allowGuildRestrictions) {
+
+		if (!GuildsBasic.getEnabled(Settings.ENABLE_RESTRICTIONS)) {
 			return;
 		}
 		
-		if (!plugin.allowPickUpRestrictions) {
+		if (!GuildsBasic.getEnabled(Settings.ENABLE_PICKUP_RESTRICTIONS)) {
 		
 			Player p = event.getPlayer();
-		    Guild g = plugin.getPlayerGuild(p);
+		    Guild g = GuildsBasic.getPlayerGuild(p);
 		    if (g != null) {
 		    	World w = p.getWorld();
 				Biome b = p.getLocation().getBlock().getBiome();
@@ -562,7 +672,7 @@ public class PlayerListener implements Listener {
 					if (g.getRestrictions().size() > 0) {
 						if (g.getRestrictions().contains(event.getItem().getType().getTypeId())) {
 							event.setCancelled(true);
-							plugin.msg(39, p, "", "");
+							new Message(MessageType.ITEM_RESTRICTED, p, GuildsBasic);
 						}
 					}
 				}
@@ -577,12 +687,12 @@ public class PlayerListener implements Listener {
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void onPlayerItemHeldEvent(PlayerItemHeldEvent event) {
 
-		if (!plugin.allowGuildRestrictions) {
+		if (!GuildsBasic.getEnabled(Settings.ENABLE_RESTRICTIONS)) {
 			return;
 		}
 		
 		Player p = event.getPlayer();
-	    Guild g = plugin.getPlayerGuild(p);
+	    Guild g = GuildsBasic.getPlayerGuild(p);
 	    if (g != null) {
 	    	World w = p.getWorld();
 			Biome b = p.getLocation().getBlock().getBiome();
@@ -591,7 +701,7 @@ public class PlayerListener implements Listener {
 					ItemStack newSlot = p.getInventory().getItem(event.getNewSlot());
 					if (newSlot != null) {
 						if (g.getRestrictions().contains(newSlot.getTypeId())) {
-							plugin.msg(39, p, "", "");
+							new Message(MessageType.ITEM_RESTRICTED, p, GuildsBasic);
 							p.getWorld().dropItem(p.getLocation(), newSlot);
 							p.getInventory().setItem(event.getNewSlot(), new ItemStack(0));
 							p.setItemInHand(new ItemStack(0));
@@ -605,19 +715,15 @@ public class PlayerListener implements Listener {
 		
 	}
 
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		
-		if (event.isCancelled()) {
-            return;
-        }
-		
-		if (!plugin.allowGuildRestrictions) {
+		if (!GuildsBasic.getEnabled(Settings.ENABLE_RESTRICTIONS)) {
 			return;
 		}
 		
 		Player p = event.getPlayer();
-	    Guild g = plugin.getPlayerGuild(p);
+	    Guild g = GuildsBasic.getPlayerGuild(p);
 	    if (g != null) {
 	    	World w = p.getWorld();
 			Biome b = p.getLocation().getBlock().getBiome();
@@ -626,7 +732,7 @@ public class PlayerListener implements Listener {
 					ItemStack inHand = p.getItemInHand();
 					if (inHand != null) {
 						if (g.getRestrictions().contains(inHand.getTypeId())) {
-							plugin.msg(11, p, "", "");
+							new Message(MessageType.ARMOUR_RESTRICTED, p, GuildsBasic);
 							p.getWorld().dropItem(p.getLocation(), inHand);
 							p.getInventory().setItemInHand(new ItemStack(0));
 							p.setItemInHand(new ItemStack(0));
@@ -641,16 +747,13 @@ public class PlayerListener implements Listener {
 		
 	}
 	
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onEntityShootBowEvent(EntityShootBowEvent event) {
-		
-		if (event.isCancelled()) {
-            return;
-        }
 		
 		if (event.getEntity() instanceof Player) { 	
 			Player p = (Player) event.getEntity();
-			Guild g = plugin.getPlayerGuild(p);
+			Guild g = GuildsBasic.getPlayerGuild(p);
+			User u = GuildsBasic.getPlayerUser(p);
 		    if (g != null) {
 		    	World w = p.getWorld();
 				Biome b = p.getLocation().getBlock().getBiome();
@@ -659,10 +762,10 @@ public class PlayerListener implements Listener {
 					Proficiency STRAIGHTARROW = g.getProficiency(ProficiencyType.STRAIGHTARROW);
 					Arrow arrow = (Arrow) event.getProjectile();
 					if (FIREARROW.getActive()) {
-						if (FIREARROW.getUseProficiency(p)) arrow.setFireTicks(FIREARROW.getTicks());
+						if (FIREARROW.getUseProficiency(u)) arrow.setFireTicks(FIREARROW.getTicks());
 					}
 					if (STRAIGHTARROW.getActive()) {
-						if (STRAIGHTARROW.getUseProficiency(p)) arrow.setVelocity(arrow.getVelocity().multiply(STRAIGHTARROW.getPower()));
+						if (STRAIGHTARROW.getUseProficiency(u)) arrow.setVelocity(arrow.getVelocity().multiply(STRAIGHTARROW.getPower()));
 					}
 				}
 			}
@@ -672,23 +775,20 @@ public class PlayerListener implements Listener {
 		
 	}
 	
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
-
-		if (event.isCancelled()) {
-            return;
-        }
 		
 		if (event.getRightClicked() instanceof LivingEntity) {
 			Player p = event.getPlayer();
-		    Guild g = plugin.getPlayerGuild(p);
+		    Guild g = GuildsBasic.getPlayerGuild(p);
+		    User u = GuildsBasic.getPlayerUser(p);
 		    if (g != null) {
 		    	World w = p.getWorld();
 				Biome b = p.getLocation().getBlock().getBiome();
 				if (g.getWorlds().contains(w) && g.getBiomes().contains(b)) {
 					Proficiency KNOCKBACK = g.getProficiency(ProficiencyType.KNOCKBACK);
 					if (KNOCKBACK.getActive()) {
-						if (KNOCKBACK.getUseProficiency(p)) {
+						if (KNOCKBACK.getUseProficiency(u)) {
 							event.getRightClicked().setVelocity(event.getRightClicked().getVelocity().add(event.getRightClicked().getLocation().toVector().subtract(event.getPlayer().getLocation().toVector()).normalize().multiply(KNOCKBACK.getPower())));
 							event.getRightClicked().getWorld().playEffect(event.getRightClicked().getLocation(), Effect.SMOKE, 25);
 						}
@@ -697,30 +797,24 @@ public class PlayerListener implements Listener {
 			}
 		}
 		
-		return;
-		
 	}
 	
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onEntityDamage(EntityDamageEvent event) {
 
 		if (event instanceof EntityDamageByEntityEvent) {
 			return;
 		}
 		
-		if (event.isCancelled()) {
-            return;
-        }
-		
 		if (event.getEntity() instanceof Player) {
 			Player p = (Player) event.getEntity();
-			Guild g = plugin.getPlayerGuild(p);
+			Guild g = GuildsBasic.getPlayerGuild(p);
 			double damage = (double) event.getDamage();
 			if (g != null) {
-				if (plugin.setBaseDelay > 0) {
-					if (plugin.BaseDelay.containsKey(p)) {
-						Bukkit.getScheduler().cancelTask(plugin.BaseDelay.get(p));
-						plugin.BaseDelay.remove(p);
+				if (GuildsBasic.getIntSetting(Settings.SET_BASE_TP_DELAY) > 0) {
+					if (GuildsBasic.BaseDelay.containsKey(p)) {
+						Bukkit.getScheduler().cancelTask(GuildsBasic.BaseDelay.get(p));
+						GuildsBasic.BaseDelay.remove(p);
 					}
 				}
 				World w = p.getWorld();
@@ -765,67 +859,83 @@ public class PlayerListener implements Listener {
 			
 			switch (dc) {
 				case CONTACT:
-					Attribute KNOCKBACK = g.getAttribute(AttributeType.DEFENSE_CONTACT);
-					value = KNOCKBACK.getPower();
+					Proficiency DEFENSE_CONTACT = g.getProficiency(ProficiencyType.DEFENSE_CONTACT);
+					if (!DEFENSE_CONTACT.getActive()) return d;
+					value = DEFENSE_CONTACT.getPower();
 				break;
 				case ENTITY_ATTACK:
-					Attribute DEFENSE_MELEE = g.getAttribute(AttributeType.DEFENSE_MELEE);
+					Proficiency DEFENSE_MELEE = g.getProficiency(ProficiencyType.DEFENSE_MELEE);
+					if (!DEFENSE_MELEE.getActive()) return d;
 					value = DEFENSE_MELEE.getPower();
 				break;
 				case PROJECTILE:
-					Attribute DEFENSE_PROJECTILE = g.getAttribute(AttributeType.DEFENSE_PROJECTILE);
+					Proficiency DEFENSE_PROJECTILE = g.getProficiency(ProficiencyType.DEFENSE_PROJECTILE);
+					if (!DEFENSE_PROJECTILE.getActive()) return d;
 					value = DEFENSE_PROJECTILE.getPower();
 				break;
 				case SUFFOCATION:
-					Attribute DEFENSE_SUFFOCATION = g.getAttribute(AttributeType.DEFENSE_SUFFOCATION);
+					Proficiency DEFENSE_SUFFOCATION = g.getProficiency(ProficiencyType.DEFENSE_SUFFOCATION);
+					if (!DEFENSE_SUFFOCATION.getActive()) return d;
 					value = DEFENSE_SUFFOCATION.getPower();
 				break;
 				case FALL:
-					Attribute DEFENSE_FALL = g.getAttribute(AttributeType.DEFENSE_FALL);
+					Proficiency DEFENSE_FALL = g.getProficiency(ProficiencyType.DEFENSE_FALL);
+					if (!DEFENSE_FALL.getActive()) return d;
 					value = DEFENSE_FALL.getPower();
 				break;
 				case FIRE:
-					Attribute DEFENSE_FIRE = g.getAttribute(AttributeType.DEFENSE_FIRE);
+					Proficiency DEFENSE_FIRE = g.getProficiency(ProficiencyType.DEFENSE_FIRE);
+					if (!DEFENSE_FIRE.getActive()) return d;
 					value = DEFENSE_FIRE.getPower();
 				break;
 				case FIRE_TICK:
-					Attribute DEFENSE_FIRE_2 = g.getAttribute(AttributeType.DEFENSE_FIRE);
+					Proficiency DEFENSE_FIRE_2 = g.getProficiency(ProficiencyType.DEFENSE_FIRE);
+					if (!DEFENSE_FIRE_2.getActive()) return d;
 					value = DEFENSE_FIRE_2.getPower();
 				break;
 				case LAVA:
-					Attribute DEFENSE_LAVA = g.getAttribute(AttributeType.DEFENSE_LAVA);
+					Proficiency DEFENSE_LAVA = g.getProficiency(ProficiencyType.DEFENSE_LAVA);
+					if (!DEFENSE_LAVA.getActive()) return d;
 					value = DEFENSE_LAVA.getPower();
 				break;
 				case DROWNING:
-					Attribute DEFENSE_DROWNING = g.getAttribute(AttributeType.DEFENSE_DROWNING);
+					Proficiency DEFENSE_DROWNING = g.getProficiency(ProficiencyType.DEFENSE_DROWNING);
+					if (!DEFENSE_DROWNING.getActive()) return d;
 					value = DEFENSE_DROWNING.getPower();
 				break;
 				case BLOCK_EXPLOSION:
-					Attribute DEFENSE_EXPLOSION = g.getAttribute(AttributeType.DEFENSE_EXPLOSION);
+					Proficiency DEFENSE_EXPLOSION = g.getProficiency(ProficiencyType.DEFENSE_EXPLOSION);
+					if (!DEFENSE_EXPLOSION.getActive()) return d;
 					value = DEFENSE_EXPLOSION.getPower();
 				break;
 				case ENTITY_EXPLOSION:
-					Attribute DEFENSE_EXPLOSION_2 = g.getAttribute(AttributeType.DEFENSE_EXPLOSION);
+					Proficiency DEFENSE_EXPLOSION_2 = g.getProficiency(ProficiencyType.DEFENSE_EXPLOSION);
+					if (!DEFENSE_EXPLOSION_2.getActive()) return d;
 					value = DEFENSE_EXPLOSION_2.getPower();
 				break;
 				case LIGHTNING:
-					Attribute DEFENSE_LIGHTNING = g.getAttribute(AttributeType.DEFENSE_LIGHTNING);
+					Proficiency DEFENSE_LIGHTNING = g.getProficiency(ProficiencyType.DEFENSE_LIGHTNING);
+					if (!DEFENSE_LIGHTNING.getActive()) return d;
 					value = DEFENSE_LIGHTNING.getPower();
 				break;
 				case STARVATION:
-					Attribute DEFENSE_STARVATION = g.getAttribute(AttributeType.DEFENSE_STARVATION);
+					Proficiency DEFENSE_STARVATION = g.getProficiency(ProficiencyType.DEFENSE_STARVATION);
+					if (!DEFENSE_STARVATION.getActive()) return d;
 					value = DEFENSE_STARVATION.getPower();
 				break;
 				case POISON:
-					Attribute DEFENSE_POISON = g.getAttribute(AttributeType.DEFENSE_POISON);
+					Proficiency DEFENSE_POISON = g.getProficiency(ProficiencyType.DEFENSE_POISON);
+					if (!DEFENSE_POISON.getActive()) return d;
 					value = DEFENSE_POISON.getPower();
 				break;
 				case MAGIC:
-					Attribute DEFENSE_MAGIC = g.getAttribute(AttributeType.DEFENSE_MAGIC);
+					Proficiency DEFENSE_MAGIC = g.getProficiency(ProficiencyType.DEFENSE_MAGIC);
+					if (!DEFENSE_MAGIC.getActive()) return d;
 					value = DEFENSE_MAGIC.getPower();
 				break;
 				case WITHER:
-					Attribute DEFENSE_WITHER = g.getAttribute(AttributeType.DEFENSE_WITHER);
+					Proficiency DEFENSE_WITHER = g.getProficiency(ProficiencyType.DEFENSE_WITHER);
+					if (!DEFENSE_WITHER.getActive()) return d;
 					value = DEFENSE_WITHER.getPower();
 				break;
 			}
@@ -846,12 +956,8 @@ public class PlayerListener implements Listener {
 		
 	}
 	
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-				
-		if (event.isCancelled()) {
-            return;
-        }
 		
 		double damage = (double) event.getDamage();
 		
@@ -860,49 +966,62 @@ public class PlayerListener implements Listener {
 			Guild defenderGuild = null;
 			if (event.getEntity() instanceof Player) {
 				defender = (Player) event.getEntity();
-				defenderGuild = plugin.getPlayerGuild(defender);
-				if (plugin.setBaseDelay > 0) {
-					if (plugin.BaseDelay.containsKey(defender)) {
-						Bukkit.getScheduler().cancelTask(plugin.BaseDelay.get(defender));
-						plugin.BaseDelay.remove(defender);
+				defenderGuild = GuildsBasic.getPlayerGuild(defender);
+				if (GuildsBasic.getIntSetting(Settings.SET_BASE_TP_DELAY) > 0) {
+					if (GuildsBasic.BaseDelay.containsKey(defender)) {
+						Bukkit.getScheduler().cancelTask(GuildsBasic.BaseDelay.get(defender));
+						GuildsBasic.BaseDelay.remove(defender);
 					}
 				}
 			}
 			Arrow arrow = (Arrow) event.getDamager();
 			if (arrow.getShooter() instanceof Player) {
 				Player damager = (Player) arrow.getShooter();
-				Guild damagerGuild = plugin.getPlayerGuild(damager);
+				Guild damagerGuild = GuildsBasic.getPlayerGuild(damager);
 				if (damagerGuild != null) {
 					World w = event.getEntity().getWorld();
 					Biome b = damager.getLocation().getBlock().getBiome();
 					if (damagerGuild.getWorlds().contains(w) && damagerGuild.getBiomes().contains(b)) {
-						Attribute ATTACK_PROJECTILE = damagerGuild.getAttribute(AttributeType.ATTACK_PROJECTILE);
-						if (ATTACK_PROJECTILE.getPower() == 0) {
-							event.setCancelled(true);
-							return;
-						} else if (ATTACK_PROJECTILE.getPower() != 1) {
-							damage = damage * (ATTACK_PROJECTILE.getPower());
+						Proficiency ATTACK_PROJECTILE = damagerGuild.getProficiency(ProficiencyType.ATTACK_PROJECTILE);
+						if (ATTACK_PROJECTILE.getActive()) {
+							if (ATTACK_PROJECTILE.getPower() == 0) {
+								event.setCancelled(true);
+								return;
+							} else if (ATTACK_PROJECTILE.getPower() != 1) {
+								damage = damage * (ATTACK_PROJECTILE.getPower());
+							}
 						}
 						if (defender != null) {
 							if (defenderGuild != null) {
-								if (plugin.allowGuildPVP == false) {
+								if (!GuildsBasic.getEnabled(Settings.ENABLE_FRIENDLY_FIRE_PVP)) {
 									if (damagerGuild.equals(defenderGuild)) {
 										event.setCancelled(true);
-										plugin.msg(14, damager, "", "");
+										new Message(MessageType.NO_FRIENDLY_FIRE, damager, GuildsBasic);
 										return;
 									}
 								}
 								damage = traitDamage(damage, event.getCause(), defenderGuild, true);
 							}
 							Proficiency PEACEKEEPER = damagerGuild.getProficiency(ProficiencyType.PEACEKEEPER);
+							Proficiency INVISIBLE = damagerGuild.getProficiency(ProficiencyType.INVISIBLE);
 							Proficiency POISONARROW = damagerGuild.getProficiency(ProficiencyType.POISONARROW);
 							Proficiency BLINDNESSARROW = damagerGuild.getProficiency(ProficiencyType.BLINDNESSARROW);
 							Proficiency CONFUSIONARROW = damagerGuild.getProficiency(ProficiencyType.CONFUSIONARROW);
 							Proficiency MOBARROW = damagerGuild.getProficiency(ProficiencyType.MOBARROW);
 							if (PEACEKEEPER.getActive()) {
-								plugin.msg(15, damager, "", "");
+								new Message(MessageType.PEACEKEEPER, damager, GuildsBasic);
 								event.setCancelled(true);
 								return;
+							}
+							if (INVISIBLE.getActive()) {
+								if (damager.isSneaking()) {
+									if (INVISIBLE.getPower() == 0) {
+										event.setCancelled(true);
+										return;
+									} else {
+										damage = damage * (INVISIBLE.getPower());
+									}
+								}
 							}
 							if (POISONARROW.getActive()) {
 								defender.addPotionEffect(new PotionEffect(PotionEffectType.POISON, POISONARROW.getTicks(), 1));
@@ -937,11 +1056,11 @@ public class PlayerListener implements Listener {
 			Guild damagerGuild = null;
 			if (event.getEntity() instanceof Player) {
 				defender = (Player) event.getEntity();
-				defenderGuild = plugin.getPlayerGuild(defender);
+				defenderGuild = GuildsBasic.getPlayerGuild(defender);
 			}
 			if (event.getDamager() instanceof Player) {
 				damager = (Player) event.getDamager();
-				damagerGuild = plugin.getPlayerGuild(damager);
+				damagerGuild = GuildsBasic.getPlayerGuild(damager);
 			}
 			if (defender == null && damager == null) {
 				return;
@@ -951,10 +1070,10 @@ public class PlayerListener implements Listener {
 				Biome b = event.getEntity().getLocation().getBlock().getBiome();
 				if (defenderGuild.getWorlds().contains(w) && defenderGuild.getBiomes().contains(b)) {
 					if (damagerGuild != null) {
-						if (plugin.allowGuildPVP == false) {
+						if (!GuildsBasic.getEnabled(Settings.ENABLE_FRIENDLY_FIRE_PVP)) {
 							if (damagerGuild.equals(defenderGuild)) {
 								event.setCancelled(true);
-								plugin.msg(14, damager, "", "");
+								new Message(MessageType.NO_FRIENDLY_FIRE, damager, GuildsBasic);
 								return;
 							}
 						}
@@ -968,14 +1087,14 @@ public class PlayerListener implements Listener {
 							LivingEntity le = (LivingEntity) event.getEntity();
 							le.damage((int) REFLECT.getPower());
 							if (damager != null) {
-								plugin.msg(16, damager, "", "");
+								new Message(MessageType.REFLECTED, damager, GuildsBasic);
 							}
 						}
 					}
 					Proficiency PEACEKEEPER = defenderGuild.getProficiency(ProficiencyType.PEACEKEEPER);
 					if (PEACEKEEPER.getActive()) {
 						if (damager != null) {
-							plugin.msg(15, defender, "", "");
+							new Message(MessageType.PEACEKEEPER, defender, GuildsBasic);
 							event.setCancelled(true);
 							return;
 						}
@@ -990,7 +1109,7 @@ public class PlayerListener implements Listener {
 						ItemStack inHand = damager.getItemInHand();
 						if (inHand != null) {
 							if (damagerGuild.getRestrictions().contains(inHand.getTypeId())) {
-								plugin.msg(11, damager, "", "");
+								new Message(MessageType.ARMOUR_RESTRICTED, damager, GuildsBasic);
 								event.setCancelled(true);
 								return;
 							}
@@ -999,34 +1118,42 @@ public class PlayerListener implements Listener {
 					Proficiency PEACEKEEPER = damagerGuild.getProficiency(ProficiencyType.PEACEKEEPER);
 					if (PEACEKEEPER.getActive()) {
 						if (defender != null) {
-							plugin.msg(16, damager, "", "");
+							new Message(MessageType.PEACEKEEPER, damager, GuildsBasic);
 							event.setCancelled(true);
 							return;
 						}
 					}
-					Attribute ATTACK_MELEE = damagerGuild.getAttribute(AttributeType.ATTACK_MELEE);
-					if (ATTACK_MELEE.getPower() == 0) {
-						damage = (double) 0;
-					} else if (ATTACK_MELEE.getPower() != 1) {
-						damage = damage * (ATTACK_MELEE.getPower());
+					Proficiency ATTACK_MELEE = damagerGuild.getProficiency(ProficiencyType.ATTACK_MELEE);
+					if (ATTACK_MELEE.getActive()) {
+						if (ATTACK_MELEE.getPower() == 0) {
+							damage = (double) 0;
+						} else if (ATTACK_MELEE.getPower() != 1) {
+							damage = damage * (ATTACK_MELEE.getPower());
+						}
 					}
 					Proficiency FIREBLADE = damagerGuild.getProficiency(ProficiencyType.FIREBLADE);
 					if (FIREBLADE.getActive()) {
-						if (plugin.isBlade(damager.getItemInHand().getTypeId())) {
-							event.getEntity().setFireTicks(FIREBLADE.getTicks());
+						if (FIREBLADE.getUseProficiency(GuildsBasic.getPlayerUser(damager))) {
+							if (GuildsBasic.isBlade(damager.getItemInHand().getTypeId())) {
+								event.getEntity().setFireTicks(FIREBLADE.getTicks());
+							}
 						}
 					}
 					Proficiency FIREPUNCH = damagerGuild.getProficiency(ProficiencyType.FIREPUNCH);
 					if (FIREPUNCH.getActive()) {
-						if (damager.getItemInHand().getType().equals(Material.AIR)) {
-							event.getEntity().setFireTicks(FIREPUNCH.getTicks());
+						if (FIREPUNCH.getUseProficiency(GuildsBasic.getPlayerUser(damager))) {
+							if (damager.getItemInHand().getType().equals(Material.AIR)) {
+								event.getEntity().setFireTicks(FIREPUNCH.getTicks());
+							}
 						}
 					}
 					Proficiency POISONBLADE = damagerGuild.getProficiency(ProficiencyType.POISONBLADE);
 					if (POISONBLADE.getActive()) {
-						if (plugin.isBlade(damager.getItemInHand().getTypeId())) {
-							if (defender != null) {
-								defender.addPotionEffect(new PotionEffect(PotionEffectType.POISON, POISONBLADE.getTicks(), 1));
+						if (POISONBLADE.getUseProficiency(GuildsBasic.getPlayerUser(damager))) {
+							if (GuildsBasic.isBlade(damager.getItemInHand().getTypeId())) {
+								if (defender != null) {
+									defender.addPotionEffect(new PotionEffect(PotionEffectType.POISON, POISONBLADE.getTicks(), 1));
+								}
 							}
 						}
 					}
@@ -1035,7 +1162,7 @@ public class PlayerListener implements Listener {
 		}
 		
 		if (damage == 0) {
-			if (plugin.allowDamageAnimationOnZero) {
+			if (GuildsBasic.getEnabled(Settings.ENABLE_DAMAGE_ANIMATION_ON_ZERO)) {
 				event.setDamage(0);
 				return;
 			} else {

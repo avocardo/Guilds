@@ -1,34 +1,36 @@
 package me.avocardo.guilds.utilities;
 
 import me.avocardo.guilds.GuildsBasic;
+import me.avocardo.guilds.messages.Message;
+import me.avocardo.guilds.messages.MessageType;
 
 import org.bukkit.entity.Player;
 
 public class Scheduler {
 
-	private GuildsBasic plugin;
+	private GuildsBasic GuildsBasic;
 	
-	public Scheduler(GuildsBasic plugin) {
+	public Scheduler(GuildsBasic GuildsBasic) {
 	
-		this.plugin = plugin;
+		this.GuildsBasic = GuildsBasic;
 		
 	}
 	
 	public int base(final Player p) {
-		int i = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+		int i = GuildsBasic.getServer().getScheduler().scheduleSyncDelayedTask(GuildsBasic, new Runnable() {
 			public void run() {
-				p.teleport(plugin.getPlayerGuild(p).getBase());
-				plugin.BaseDelay.remove(p);
+				p.teleport(GuildsBasic.getPlayerGuild(p).getBase());
+				GuildsBasic.BaseDelay.remove(p);
 			}
-		}, plugin.setBaseDelay);
+		}, GuildsBasic.getIntSetting(Settings.SET_BASE_TP_DELAY));
 		return i;
 	}
 	
 	public int invisible(final Player p) {
-		int i = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+		int i = GuildsBasic.getServer().getScheduler().scheduleSyncRepeatingTask(GuildsBasic, new Runnable() {
 			public void run() {
 				if (!p.isSneaking()) {
-					plugin.showPlayer(p);
+					GuildsBasic.showPlayer(p);
 				}
 			}
 		}, 0L, 50L);
@@ -36,50 +38,60 @@ public class Scheduler {
 	}
 	
 	public int sun(final Player p) {
-		int i = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+		int i = GuildsBasic.getServer().getScheduler().scheduleSyncRepeatingTask(GuildsBasic, new Runnable() {
 			public void run() {
-				p.damage((int) plugin.getPlayerGuild(p).getProficiency(ProficiencyType.SUNLIGHT).getPower());
-				plugin.msg(17, p, "", "");
+				p.damage((int) GuildsBasic.getPlayerGuild(p).getProficiency(ProficiencyType.SUNLIGHT).getPower());
+				new Message(MessageType.SUNLIGHT, p, GuildsBasic);
+			}
+		}, 0L, 50L);
+		return i;
+	}
+	
+	public int altitude(final Player p) {
+		int i = GuildsBasic.getServer().getScheduler().scheduleSyncRepeatingTask(GuildsBasic, new Runnable() {
+			public void run() {
+				p.damage((int) GuildsBasic.getPlayerGuild(p).getProficiency(ProficiencyType.ALTITUDE).getPower());
+				new Message(MessageType.ALTITUDE, p, GuildsBasic);
 			}
 		}, 0L, 50L);
 		return i;
 	}
 	
 	public int moon(final Player p) {
-		int i = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+		int i = GuildsBasic.getServer().getScheduler().scheduleSyncRepeatingTask(GuildsBasic, new Runnable() {
 			public void run() {
-				p.damage((int) plugin.getPlayerGuild(p).getProficiency(ProficiencyType.MOONLIGHT).getPower());
-				plugin.msg(18, p, "", "");
+				p.damage((int) GuildsBasic.getPlayerGuild(p).getProficiency(ProficiencyType.MOONLIGHT).getPower());
+				new Message(MessageType.MOONLIGHT, p, GuildsBasic);
 			}
 		}, 0L, 50L);
 		return i;
 	}
 	
 	public int storm(final Player p) {
-		int i = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+		int i = GuildsBasic.getServer().getScheduler().scheduleSyncRepeatingTask(GuildsBasic, new Runnable() {
 			public void run() {
-				p.damage((int) plugin.getPlayerGuild(p).getProficiency(ProficiencyType.STORM).getPower());
-				plugin.msg(19, p, "", "");
+				p.damage((int) GuildsBasic.getPlayerGuild(p).getProficiency(ProficiencyType.STORM).getPower());
+				new Message(MessageType.RAIN, p, GuildsBasic);
 			}
 		}, 0L, 50L);
 		return i;
 	}
 	
 	public int land(final Player p) {
-		int i = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+		int i = GuildsBasic.getServer().getScheduler().scheduleSyncRepeatingTask(GuildsBasic, new Runnable() {
 			public void run() {
-				p.damage((int) plugin.getPlayerGuild(p).getProficiency(ProficiencyType.LANDDAMAGE).getPower());
-				plugin.msg(20, p, "", "");
+				p.damage((int) GuildsBasic.getPlayerGuild(p).getProficiency(ProficiencyType.LANDDAMAGE).getPower());
+				new Message(MessageType.LAND, p, GuildsBasic);
 			}
 		}, 0L, 50L);
 		return i;
 	}
 	
 	public int water(final Player p) {
-		int i = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+		int i = GuildsBasic.getServer().getScheduler().scheduleSyncRepeatingTask(GuildsBasic, new Runnable() {
 			public void run() {
-				p.damage((int) plugin.getPlayerGuild(p).getProficiency(ProficiencyType.WATERDAMAGE).getPower());
-				plugin.msg(21, p, "", "");
+				p.damage((int) GuildsBasic.getPlayerGuild(p).getProficiency(ProficiencyType.WATERDAMAGE).getPower());
+				new Message(MessageType.WATER, p, GuildsBasic);
 			}
 		}, 0L, 50L);
 		return i;

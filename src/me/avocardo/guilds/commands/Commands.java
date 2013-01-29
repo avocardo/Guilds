@@ -2,7 +2,11 @@ package me.avocardo.guilds.commands;
 
 import me.avocardo.guilds.Guild;
 import me.avocardo.guilds.GuildsBasic;
+import me.avocardo.guilds.messages.Console;
+import me.avocardo.guilds.messages.Message;
+import me.avocardo.guilds.messages.MessageType;
 import me.avocardo.guilds.utilities.Scheduler;
+import me.avocardo.guilds.utilities.Settings;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -15,10 +19,10 @@ import org.bukkit.entity.Player;
 
 public class Commands implements CommandExecutor {
 
-	private GuildsBasic plugin;
+	private GuildsBasic GuildsBasic;
 	
-	public Commands(GuildsBasic plugin) {
-		this.plugin = plugin;
+	public Commands(GuildsBasic GuildsBasic) {
+		this.GuildsBasic = GuildsBasic;
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -36,7 +40,7 @@ public class Commands implements CommandExecutor {
 					if (args[0].equalsIgnoreCase("list")) {
 						if (p.hasPermission("guilds.user.list")) {
 							String msg = "";
-							for (Guild g: plugin.GuildsList) {
+							for (Guild g: GuildsBasic.GuildsList) {
 								if (msg == "") {
 									msg = g.getName();
 								} else {
@@ -45,122 +49,122 @@ public class Commands implements CommandExecutor {
 							}
 							p.sendMessage(msg + ".");
 						} else {
-							plugin.msg(25, p, "", "");
+							new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 						}
 					}
 					
 					if (args[0].equalsIgnoreCase("save")) {
 						if (p.hasPermission("guilds.admin.save")) {
-							plugin.savePlayers();
-							plugin.saveGuilds();
-							plugin.saveSettings();
-							plugin.msg(26, p, "", "");
+							GuildsBasic.savePlayers();
+							GuildsBasic.saveGuilds();
+							GuildsBasic.saveSettings();
+							new Message(MessageType.SAVE, p, GuildsBasic);
 						} else {
-							plugin.msg(25, p, "", "");
+							new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 						}
 					}
 					
 					if (args[0].equalsIgnoreCase("load")) {
 						if (p.hasPermission("guilds.admin.load")) {
-							plugin.loadGuilds();
-							plugin.loadPlayers();
-							plugin.loadSettings();
-							plugin.msg(27, p, "", "");
-							plugin.clearScheduler();
+							GuildsBasic.loadGuilds();
+							GuildsBasic.loadPlayers();
+							GuildsBasic.loadSettings();
+							new Message(MessageType.LOAD, p, GuildsBasic);
+							GuildsBasic.clearScheduler();
 						} else {
-							plugin.msg(25, p, "", "");
+							new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 						}
 					}
 					
 					if (args[0].equalsIgnoreCase("join")) {
 						if (args.length > 1) {
-							if (plugin.allowJoinPermissions) {
+							if (GuildsBasic.getEnabled(Settings.ENABLE_GUILD_JOIN_PERMISSIONS)) {
 								if (p.hasPermission("guilds.guild." + args[1])) {
-									plugin.join(p.getName(), args[1], p);
+									GuildsBasic.join(p.getName(), args[1], p);
 								} else {
-									plugin.msg(38, p, "", args[1]);
+									new Message(MessageType.NO_PERMISSION_JOIN, p, args[1], GuildsBasic);
 								}
 							} else {
 								if (p.hasPermission("guilds.user.join")) {
-									plugin.join(p.getName(), args[1], p);
+									GuildsBasic.join(p.getName(), args[1], p);
 								} else {
-									plugin.msg(25, p, "", "");
+									new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 								}
 							}
 						} else {
-							plugin.msg(35, p, "", "");
+							new Message(MessageType.COMMAND_JOIN, p, GuildsBasic);
 						}
 					}
 					
 					if (args[0].equalsIgnoreCase("add")) {
 						if (args.length > 2) {
 							if (p.hasPermission("guilds.admin.add")) {
-								plugin.join(args[1], args[2], p);
+								GuildsBasic.join(args[1], args[2], p);
 							} else {
-								plugin.msg(25, p, "", "");
+								new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 							}
 						} else {
-							plugin.msg(34, p, "", "");
+							new Message(MessageType.COMMAND_ADD, p, GuildsBasic);
 						}
 					}
 					
 					if (args[0].equalsIgnoreCase("kick")) {
 						if (args.length > 1) {
 							if (p.hasPermission("guilds.admin.kick")) {
-								plugin.leave(args[1], p);
+								GuildsBasic.leave(args[1], p);
 							} else {
-								plugin.msg(25, p, "", "");
+								new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 							}
 						} else {
-							plugin.msg(33, p, "", "");
+							new Message(MessageType.COMMAND_KICK, p, GuildsBasic);
 						}
 					}
 					
 					if (args[0].equalsIgnoreCase("leave")) {
 						if (p.hasPermission("guilds.user.leave")) {
-							if (plugin.allowChangeGuild) {
-								plugin.leave(p.getName(), p);
+							if (GuildsBasic.getEnabled(Settings.ENABLE_CHANGE_GUILD)) {
+								GuildsBasic.leave(p.getName(), p);
 							} else {
-								plugin.msg(32, p, "", "");
+								new Message(MessageType.GUILD_CHOSEN, p, GuildsBasic);
 							}
 						} else {
-							plugin.msg(25, p, "", "");
+							new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 						}
 					}
 					
 					if (args[0].equalsIgnoreCase("create")) {
 						if (args.length > 1) {
 							if (p.hasPermission("guilds.admin.create")) {
-								plugin.create(args[1], p);
+								GuildsBasic.create(args[1], p);
 							} else {
-								plugin.msg(25, p, "", "");
+								new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 							}
 						} else {
-							plugin.msg(31, p, "", "");
+							new Message(MessageType.COMMAND_CREATE, p, GuildsBasic);
 						}
 					}
 					
 					if (args[0].equalsIgnoreCase("remove")) {
 						if (args.length > 1) {
 							if (p.hasPermission("guilds.admin.remove")) {
-								plugin.remove(args[1], p);
+								GuildsBasic.remove(args[1], p);
 							} else {
-								plugin.msg(25, p, "", "");
+								new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 							}
 						} else {
-							plugin.msg(30, p, "", "");
+							new Message(MessageType.COMMAND_REMOVE, p, GuildsBasic);
 						}
 					}
 					
 					if (args[0].equalsIgnoreCase("setbase")) {
 						if (args.length > 1) {
 							if (p.hasPermission("guilds.admin.setbase")) {
-								plugin.setbase(args[1], p);
+								GuildsBasic.setbase(args[1], p);
 							} else {
-								plugin.msg(25, p, "", "");
+								new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 							}
 						} else {
-							plugin.msg(29, p, "", "");
+							new Message(MessageType.COMMAND_SETBASE, p, GuildsBasic);
 						}
 					}
 					
@@ -178,20 +182,20 @@ public class Commands implements CommandExecutor {
 				
 				if (p.hasPermission("guilds.user.base")) {
 					
-					Guild g = plugin.getPlayerGuild(p);
+					Guild g = GuildsBasic.getPlayerGuild(p);
 					
 					if (g != null) {
-						if (plugin.setBaseDelay == 0) {
+						if (GuildsBasic.getIntSetting(Settings.SET_BASE_TP_DELAY) == 0) {
 							p.teleport(g.getBase());
 						} else {
-							plugin.BaseDelay.put(p, new Scheduler(plugin).base(p));
+							GuildsBasic.BaseDelay.put(p, new Scheduler(GuildsBasic).base(p));
 						}
 					} else {
-						plugin.msg(28, p, "", "");
+						new Message(MessageType.NOT_IN_GUILD, p, GuildsBasic);
 					}
 					
 				} else {
-					plugin.msg(25, p, "", "");
+					new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 				}
 				
 				return true;
@@ -206,110 +210,118 @@ public class Commands implements CommandExecutor {
 					
 					if (args[0].equalsIgnoreCase("list")) {
 						String msg = "";
-						for (Guild g: plugin.GuildsList) {
+						for (Guild g: GuildsBasic.GuildsList) {
 							if (msg == "") {
 								msg = g.getName();
 							} else {
 								msg = msg + ", " + g.getName();
 							}
 						}
-						plugin.console(msg + ".");
+						GuildsBasic.sendConsole(msg + ".");
 					} else if (args[0].equalsIgnoreCase("save")) {
-						plugin.savePlayers();
-						plugin.saveGuilds();
-						plugin.saveSettings();
-						plugin.msg2(26, "", "");
+						GuildsBasic.savePlayers();
+						GuildsBasic.saveGuilds();
+						GuildsBasic.saveSettings();
+						new Console(MessageType.SAVE, GuildsBasic);
 					} else if (args[0].equalsIgnoreCase("load")) {
-						plugin.loadGuilds();
-						plugin.loadPlayers();
-						plugin.loadSettings();
-						plugin.msg2(27, "", "");
-						plugin.clearScheduler();
+						GuildsBasic.loadGuilds();
+						GuildsBasic.loadPlayers();
+						GuildsBasic.loadSettings();
+						new Console(MessageType.LOAD, GuildsBasic);
+						GuildsBasic.clearScheduler();
 					} else if (args[0].equalsIgnoreCase("add")) {
 						if (args.length > 2) {
 							Player p = Bukkit.getPlayer(args[1]);
-							Guild g = plugin.getGuild(args[2]);
+							Guild g = GuildsBasic.getGuild(args[2]);
 							if (p != null) {
 								if (g != null) {
-									if (plugin.PlayerGuild.containsKey(p)) {
-										plugin.PlayerGuild.remove(p);
+									if (GuildsBasic.PlayerGuild.containsKey(p)) {
+										GuildsBasic.PlayerGuild.remove(p);
 									}
-									plugin.PlayerGuild.put(p.getName(), g);
-									plugin.savePlayers();
-									plugin.loadPlayers();
-									if (plugin.TasksWater.containsKey(p)) {
-										Bukkit.getScheduler().cancelTask(plugin.TasksWater.get(p));
-										plugin.TasksWater.remove(p);
+									GuildsBasic.PlayerGuild.put(p.getName(), g);
+									GuildsBasic.savePlayers();
+									GuildsBasic.loadPlayers();
+									if (GuildsBasic.TasksWater.containsKey(p)) {
+										Bukkit.getScheduler().cancelTask(GuildsBasic.TasksWater.get(p));
+										GuildsBasic.TasksWater.remove(p);
 									}
-									if (plugin.TasksLand.containsKey(p)) {
-										Bukkit.getScheduler().cancelTask(plugin.TasksLand.get(p));
-										plugin.TasksLand.remove(p);
+									if (GuildsBasic.TasksLand.containsKey(p)) {
+										Bukkit.getScheduler().cancelTask(GuildsBasic.TasksLand.get(p));
+										GuildsBasic.TasksLand.remove(p);
 									}
-									if (plugin.TasksSun.containsKey(p)) {
-										Bukkit.getScheduler().cancelTask(plugin.TasksSun.get(p));
-										plugin.TasksSun.remove(p);
+									if (GuildsBasic.TasksSun.containsKey(p)) {
+										Bukkit.getScheduler().cancelTask(GuildsBasic.TasksSun.get(p));
+										GuildsBasic.TasksSun.remove(p);
 									}
-									if (plugin.TasksMoon.containsKey(p)) {
-										Bukkit.getScheduler().cancelTask(plugin.TasksMoon.get(p));
-										plugin.TasksMoon.remove(p);
+									if (GuildsBasic.TasksMoon.containsKey(p)) {
+										Bukkit.getScheduler().cancelTask(GuildsBasic.TasksMoon.get(p));
+										GuildsBasic.TasksMoon.remove(p);
 									}
-									if (plugin.TasksStorm.containsKey(p)) {
-										Bukkit.getScheduler().cancelTask(plugin.TasksStorm.get(p));
-										plugin.TasksStorm.remove(p);
+									if (GuildsBasic.TasksStorm.containsKey(p)) {
+										Bukkit.getScheduler().cancelTask(GuildsBasic.TasksStorm.get(p));
+										GuildsBasic.TasksStorm.remove(p);
 									}
-									plugin.msg2(37, p.getName(), g.getName());
+									if (GuildsBasic.TasksAltitude.containsKey(p)) {
+										Bukkit.getScheduler().cancelTask(GuildsBasic.TasksAltitude.get(p));
+										GuildsBasic.TasksAltitude.remove(p);
+									}
+									new Console(MessageType.PLAYER_GUILD_JOIN, p, g, GuildsBasic);
 								} else {
-									plugin.msg2(2, args[1], args[2]);
+									new Console(MessageType.GUILD_NOT_RECOGNISED, args[2], GuildsBasic);
 								}
 							} else {
-								plugin.msg2(3, args[1], args[2]);
+								new Console(MessageType.PLAYER_NOT_RECOGNISED, args[1], GuildsBasic);
 							}
 						} else {
-							plugin.msg2(34, "", "");
+							new Console(MessageType.COMMAND_JOIN, GuildsBasic);
 						}
 					} else if (args[0].equalsIgnoreCase("kick")) {
 						if (args.length > 1) {
 							Player player = Bukkit.getPlayer(args[1]);
 							if (player != null) {
-								if (plugin.PlayerGuild.containsKey(player.getName())) {
-									plugin.PlayerGuild.remove(player.getName());
+								if (GuildsBasic.PlayerGuild.containsKey(player.getName())) {
+									GuildsBasic.PlayerGuild.remove(player.getName());
 									
 								}
-								plugin.msg2(5, player.getName(), "");
-								plugin.msg(6, player, "", "");
-								plugin.savePlayers();
-								plugin.loadPlayers();
-								if (plugin.TasksWater.containsKey(player)) {
-									Bukkit.getScheduler().cancelTask(plugin.TasksWater.get(player));
-									plugin.TasksWater.remove(player);
+								new Console(MessageType.PLAYER_REMOVED_FROM_GUILD, player, GuildsBasic);
+								new Message(MessageType.YOU_REMOVED_FROM_GUILD, player, GuildsBasic);
+								GuildsBasic.savePlayers();
+								GuildsBasic.loadPlayers();
+								if (GuildsBasic.TasksWater.containsKey(player)) {
+									Bukkit.getScheduler().cancelTask(GuildsBasic.TasksWater.get(player));
+									GuildsBasic.TasksWater.remove(player);
 								}
-								if (plugin.TasksLand.containsKey(player)) {
-									Bukkit.getScheduler().cancelTask(plugin.TasksLand.get(player));
-									plugin.TasksLand.remove(player);
+								if (GuildsBasic.TasksLand.containsKey(player)) {
+									Bukkit.getScheduler().cancelTask(GuildsBasic.TasksLand.get(player));
+									GuildsBasic.TasksLand.remove(player);
 								}
-								if (plugin.TasksSun.containsKey(player)) {
-									Bukkit.getScheduler().cancelTask(plugin.TasksSun.get(player));
-									plugin.TasksSun.remove(player);
+								if (GuildsBasic.TasksSun.containsKey(player)) {
+									Bukkit.getScheduler().cancelTask(GuildsBasic.TasksSun.get(player));
+									GuildsBasic.TasksSun.remove(player);
 								}
-								if (plugin.TasksMoon.containsKey(player)) {
-									Bukkit.getScheduler().cancelTask(plugin.TasksMoon.get(player));
-									plugin.TasksMoon.remove(player);
+								if (GuildsBasic.TasksMoon.containsKey(player)) {
+									Bukkit.getScheduler().cancelTask(GuildsBasic.TasksMoon.get(player));
+									GuildsBasic.TasksMoon.remove(player);
 								}
-								if (plugin.TasksStorm.containsKey(player)) {
-									Bukkit.getScheduler().cancelTask(plugin.TasksStorm.get(player));
-									plugin.TasksStorm.remove(player);
+								if (GuildsBasic.TasksStorm.containsKey(player)) {
+									Bukkit.getScheduler().cancelTask(GuildsBasic.TasksStorm.get(player));
+									GuildsBasic.TasksStorm.remove(player);
+								}
+								if (GuildsBasic.TasksAltitude.containsKey(player)) {
+									Bukkit.getScheduler().cancelTask(GuildsBasic.TasksAltitude.get(player));
+									GuildsBasic.TasksAltitude.remove(player);
 								}
 							} else {
-								plugin.msg2(3, args[1], "");
+								new Console(MessageType.PLAYER_NOT_RECOGNISED, args[1], GuildsBasic);
 							}
 						} else {
-							plugin.msg2(33, "", "");
+							new Console(MessageType.COMMAND_KICK, GuildsBasic);
 						}
 					} else if (args[0].equalsIgnoreCase("create")) {
 						if (args.length > 1) {
-							Guild guild = plugin.getGuild(args[1]);
+							Guild guild = GuildsBasic.getGuild(args[1]);
 							if (guild != null) {
-								plugin.msg2(9, "", args[1]);
+								new Console(MessageType.GUILD_EXISTS, guild, GuildsBasic);
 							} else {
 								World w = null;
 								String world = "world";
@@ -321,37 +333,39 @@ public class Commands implements CommandExecutor {
 									}
 								}
 								Guild g = new Guild();
+								g.setName(args[1]);
+								g.New(GuildsBasic);
 								g.setBase(new Location(w, 0, 0, 0, 0, 0));
-								plugin.GuildsList.add(g);
-								plugin.msg2(8, "", args[1]);
-								plugin.saveGuilds();
-								plugin.loadGuilds();
+								GuildsBasic.GuildsList.add(g);
+								new Console(MessageType.GUILD_CREATED, g, GuildsBasic);
+								GuildsBasic.saveGuilds();
+								GuildsBasic.loadGuilds();
 							}
 						} else {
-							plugin.msg2(31, "", "");
+							new Console(MessageType.COMMAND_CREATE, GuildsBasic);
 						}
 					} else if (args[0].equalsIgnoreCase("remove")) {
 						if (args.length > 1) {
-							Guild guild = plugin.getGuild(args[1]);
+							Guild guild = GuildsBasic.getGuild(args[1]);
 							if (guild != null) {
-								plugin.GuildsList.remove(guild);
-								plugin.msg2(10, "", args[1]);
-								plugin.saveGuilds();
-								plugin.loadGuilds();
-								plugin.savePlayers();
-								plugin.loadPlayers();
+								GuildsBasic.GuildsList.remove(guild);
+								new Console(MessageType.GUILD_DELETED, guild, GuildsBasic);
+								GuildsBasic.saveGuilds();
+								GuildsBasic.loadGuilds();
+								GuildsBasic.savePlayers();
+								GuildsBasic.loadPlayers();
 							} else {
-								plugin.msg2(2, "", args[1]);
+								new Console(MessageType.GUILD_NOT_RECOGNISED, args[1], GuildsBasic);
 							}
 						} else {
-							plugin.msg2(30, "", "");
+							new Console(MessageType.COMMAND_REMOVE, GuildsBasic);
 						}
 					} else {
-						plugin.console(ChatColor.YELLOW + "Console Command not recognised...");
+						GuildsBasic.sendConsole("Console Command not recognised...");
 					}
 					
 				} else {
-					plugin.console(ChatColor.YELLOW + "GuildsBasic v" + plugin.v);
+					GuildsBasic.sendConsole("GuildsBasic v" + GuildsBasic.v);
 				}
 				
 				return true;
@@ -364,16 +378,16 @@ public class Commands implements CommandExecutor {
 				
 				if (p.hasPermission("guilds.user.base")) {
 					
-					Guild g = plugin.getPlayerGuild(p);
+					Guild g = GuildsBasic.getPlayerGuild(p);
 					
 					if (g != null) {
 						p.teleport(g.getBase());
 					} else {
-						plugin.msg(28, p, "", "");
+						new Message(MessageType.NOT_IN_GUILD, p, GuildsBasic);
 					}
 					
 				} else {
-					plugin.msg(25, p, "", "");
+					new Message(MessageType.NO_PERMISSION, p, GuildsBasic);
 				}
 				
 				return true;
@@ -387,7 +401,7 @@ public class Commands implements CommandExecutor {
 	}
 
 	public void help(Player player) {
-		player.sendMessage(ChatColor.YELLOW + "=============== Guilds v" + plugin.v + " ===============");
+		player.sendMessage(ChatColor.YELLOW + "=============== Guilds v" + GuildsBasic.v + " ===============");
 		player.sendMessage(ChatColor.AQUA + "/guilds save " + ChatColor.YELLOW + ": save to file.");
 		player.sendMessage(ChatColor.AQUA + "/guilds load " + ChatColor.YELLOW + ": load from file.");
 		player.sendMessage(ChatColor.AQUA + "/guilds join <guild> " + ChatColor.YELLOW + ": join guild.");
@@ -398,7 +412,7 @@ public class Commands implements CommandExecutor {
 		player.sendMessage(ChatColor.AQUA + "/guilds remove <guild> " + ChatColor.YELLOW + ": remove guild.");
 		player.sendMessage(ChatColor.AQUA + "/guilds setbase <guild> " + ChatColor.YELLOW + ": set guilds base.");
 		player.sendMessage(ChatColor.AQUA + "/base " + ChatColor.YELLOW + ": tp to your guild base.");
-		player.sendMessage(ChatColor.YELLOW + "=============== Guilds v" + plugin.v + " ===============");
+		player.sendMessage(ChatColor.YELLOW + "=============== Guilds v" + GuildsBasic.v + " ===============");
 	}
 
 }

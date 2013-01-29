@@ -2,6 +2,7 @@ package me.avocardo.guilds.listeners;
 
 import me.avocardo.guilds.Guild;
 import me.avocardo.guilds.GuildsBasic;
+import me.avocardo.guilds.utilities.Settings;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,36 +12,34 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class ChatListener implements Listener {
 
-	private GuildsBasic plugin;
+	private GuildsBasic GuildsBasic;
 	
-	public ChatListener(GuildsBasic plugin) {
+	public ChatListener(GuildsBasic GuildsBasic) {
 		
-		this.plugin = plugin;
+		this.GuildsBasic = GuildsBasic;
         
     }
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.NORMAL)
 	public void onPlayerChat(final AsyncPlayerChatEvent event) {
 		
 		String format = event.getFormat();
 		
-		plugin.console(event.getFormat());
-		
-		if (plugin.allowGuildPrefix == true) {
+		if (GuildsBasic.getEnabled(Settings.ENABLE_PLAYER_GUILD_PREFIX)) {
 			Player player = event.getPlayer();
-			Guild guild = plugin.getPlayerGuild(player);
+			Guild guild = GuildsBasic.getPlayerGuild(player);
 			if (guild != null) {
 				format = format.replace("%1$s", guild.getPlayerPrefix() + "%1$s");
 				format = format.replace("%1$s", "%1$s" + guild.getPlayerSuffix());
 			}
 		}
 		
-		if (plugin.allowChatFormat == true) {
-			format = format.replace("<", plugin.chatPrefix);
-			format = format.replace(">", plugin.chatSuffix);
+		if (GuildsBasic.getEnabled(Settings.ENABLE_GUILD_CHAT_FORMAT)) {
+			format = format.replace("<", GuildsBasic.getSetting(Settings.SET_CHAT_PREFIX));
+			format = format.replace(">", GuildsBasic.getSetting(Settings.SET_CHAT_SUFFIX));
 		}
 		
-		if (plugin.allowChatColor == true) {
+		if (GuildsBasic.getEnabled(Settings.ENABLE_CHAT_COLOR)) {
 			format = format.replaceAll("&([0-9a-fk-or])", "\u00A7$1");
 			event.setMessage(event.getMessage().replaceAll("&([0-9a-fk-or])", "\u00A7$1"));
 		}
