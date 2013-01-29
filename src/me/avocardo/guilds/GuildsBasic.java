@@ -15,11 +15,13 @@ import me.avocardo.guilds.commands.Commands;
 import me.avocardo.guilds.listeners.BlockListener;
 import me.avocardo.guilds.listeners.ChatListener;
 import me.avocardo.guilds.listeners.PlayerListener;
-import me.avocardo.guilds.utilities.Attribute;
-import me.avocardo.guilds.utilities.AttributeType;
+import me.avocardo.guilds.listeners.TagListener;
+import me.avocardo.guilds.messages.Message;
+import me.avocardo.guilds.messages.MessageType;
 import me.avocardo.guilds.utilities.Proficiency;
 import me.avocardo.guilds.utilities.ProficiencyType;
 import me.avocardo.guilds.utilities.Scheduler;
+import me.avocardo.guilds.utilities.Settings;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -28,7 +30,7 @@ import org.bukkit.block.Biome;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -39,33 +41,7 @@ public class GuildsBasic extends JavaPlugin  {
 	public String chatFormat;
 	
 	public String v = "0.0.0";
-	
-	public String[] messages = new String[50];
-	
-	public boolean allowChangeGuild = true;
-	public boolean allowNoGuild = true;
-	public boolean allowGuildPVP = true;
-	public boolean allowBaseOnDeath = true;
-	public boolean allowGuildProtection = true;
-	public boolean allowDamageAnimationOnZero = true;
-	public boolean allowJoinPermissions = false;
-	public boolean allowPickUpRestrictions = true;
-	public boolean allowOtherGuildWithinProtection = true;
-	public boolean allowChatColor = true;
-	public boolean allowGuildPrefix = true;
-	public boolean allowChatFormat = true;
-	public boolean allowJoinDefaultGuild = false;
-	public boolean allowGuildRestrictions = true;
-	public boolean allowGuildNameOnBroadcast = false;
-	
-	public String chatPrefix = "<";
-	public String chatSuffix = "> ";
-	public String guildsColor = "&b";
-	public String defaultGuild = "test";
-	
-	public int setGuildProtectionBarrier = 50;
-	public int setBaseDelay = 0;
-	
+		
 	private FileConfiguration SettingsConfig = null;
 	private File SettingsConfigFile = null;
 	private FileConfiguration PlayersConfig = null;
@@ -76,7 +52,8 @@ public class GuildsBasic extends JavaPlugin  {
 	private File MessagesConfigFile = null;
 
 	public Map <String, Guild> PlayerGuild = new HashMap <String, Guild>();
-	public Map <Player, List<ItemStack>> Inventory = new HashMap <Player, List<ItemStack>>();
+	public Map <Player, User> PlayerUser = new HashMap <Player, User>();
+	
 	public Map <Player, Integer> TasksSun = new HashMap <Player, Integer>();
 	public Map <Player, Integer> TasksWater = new HashMap <Player, Integer>();
 	public Map <Player, Integer> TasksStorm = new HashMap <Player, Integer>();
@@ -84,17 +61,10 @@ public class GuildsBasic extends JavaPlugin  {
 	public Map <Player, Integer> TasksMoon = new HashMap <Player, Integer>();
 	public Map <Player, Integer> BaseDelay = new HashMap <Player, Integer>();
 	public Map <Player, Integer> TasksInvisible = new HashMap <Player, Integer>();
+	public Map <Player, Integer> TasksAltitude = new HashMap <Player, Integer>();
 	
 	public List <Guild> GuildsList = new ArrayList <Guild>();
-	
-	public void console(String msg) {
 		
-		msg = "[Guilds] " + msg;
-		msg = msg.replaceAll("&([0-9a-fk-or])", "");
-		System.out.println(msg);
-		
-	}
-	
 	public void onEnable() {
 		
 		PM = getServer().getPluginManager();
@@ -124,13 +94,17 @@ public class GuildsBasic extends JavaPlugin  {
         loadMessages();
         loadGuilds();
         loadPlayers();
-        
-        saveMessages();
-        loadMessages();
-        
+               
         PM.registerEvents(new PlayerListener(this), this);
         PM.registerEvents(new BlockListener(this), this);
         PM.registerEvents(new ChatListener(this), this);
+        
+        for (Plugin p : PM.getPlugins()) {
+        	 if (p.getName().equalsIgnoreCase("TagAPI")) {
+             	PM.registerEvents(new TagListener(this), this);
+             	sendConsole("TagAPI listener activated...");
+             }
+        }
         
         getCommand("guilds").setExecutor(new Commands(this));
         getCommand("base").setExecutor(new Commands(this));
@@ -138,6 +112,27 @@ public class GuildsBasic extends JavaPlugin  {
         v = this.getDescription().getVersion();
         
         clearScheduler();
+        
+        PlayerUser.clear();
+
+        for (Player p : Bukkit.getOnlinePlayers()) {
+    		PlayerUser.put(p, new User(p));
+    		Guild g = getPlayerGuild(p);
+    		World w = p.getWorld();
+    		Biome b = p.getLocation().getBlock().getBiome();
+    		if (g != null) {
+    			if (g.getWorlds().contains(w) && g.getBiomes().contains(b)) {
+    				Proficiency MAX_HEALTH = g.getProficiency(ProficiencyType.MAX_HEALTH);
+    				if (MAX_HEALTH.getActive()) {
+    					if (MAX_HEALTH.getPower() < 20 && MAX_HEALTH.getPower() > 0) {
+							if (p.getHealth() > (int) MAX_HEALTH.getPower()) {
+								p.setHealth((int) MAX_HEALTH.getPower());
+							}
+    					}
+    				}
+    			}
+    		}
+        }
 		
 	}
 	
@@ -159,15 +154,19 @@ public class GuildsBasic extends JavaPlugin  {
 		}
 		
 	}
+	
+	public User getPlayerUser(Player p) {		
+		return PlayerUser.get(p);
+	}
 		
 	public Guild getPlayerGuild(Player p) {
 		
 		if (PlayerGuild.get(p.getName()) != null)
 			return PlayerGuild.get(p.getName());
 		else
-			if (allowJoinDefaultGuild)
-				if (getGuild(defaultGuild) != null)
-					return getGuild(defaultGuild);
+			if (getEnabled(Settings.ENABLE_DEFAULT_GUILD))
+				if (getGuild(getSetting(Settings.SET_DEFAULT_GUILD)) != null)
+					return getGuild(getSetting(Settings.SET_DEFAULT_GUILD));
 		
 		return null;
 		
@@ -190,7 +189,7 @@ public class GuildsBasic extends JavaPlugin  {
 	
 	public void loadMessages() {
 		
-		console("Loading messages.yml");
+		sendConsole("Loading messages.yml");
 		
 		MessagesConfigFile = new File(getDataFolder(), "messages.yml");
 		
@@ -202,26 +201,18 @@ public class GuildsBasic extends JavaPlugin  {
 			MessagesConfig.setDefaults(defConfig);
 		}
 		
-		Set<String> m = MessagesConfig.getConfigurationSection("").getKeys(false);
-		
-		int mess = 0;
-		
-		if (m.isEmpty()) {
-			// No Messages
-		} else {
-			for (String str : m) {
-				mess = Integer.parseInt(str);
-				if (mess <= 50) {
-					messages[mess] = MessagesConfig.getString(str);
-				}
+		for (MessageType m : MessageType.values()) {
+			if (SettingsConfig.isSet(m.toString())) {
+				m.setMessage(SettingsConfig.getString(m.toString()));
 			}
+			
 		}
 		
 	}
 	
 	public void loadSettings() {
 		
-		console("Loading settings.yml");
+		sendConsole("Loading settings.yml");
 		
 		SettingsConfigFile = new File(getDataFolder(), "settings.yml");
 			
@@ -233,43 +224,24 @@ public class GuildsBasic extends JavaPlugin  {
 			SettingsConfig.setDefaults(defConfig);
 		}
 		
-		Set<String> s = SettingsConfig.getConfigurationSection("").getKeys(false);
-		
-		if (s.isEmpty()) {
-			// No Settings
-		} else {
-				
-			allowChangeGuild = SettingsConfig.getBoolean("allowChangeGuild", true);
-			allowNoGuild = SettingsConfig.getBoolean("allowNoGuild", true);
-			allowGuildPVP = SettingsConfig.getBoolean("allowGuildPVP", true);
-			allowBaseOnDeath = SettingsConfig.getBoolean("allowBaseOnDeath", true);
-			allowGuildProtection = SettingsConfig.getBoolean("allowGuildProtection", true);
-			allowDamageAnimationOnZero = SettingsConfig.getBoolean("allowDamageAnimationOnZero", true);
-			allowChatColor = SettingsConfig.getBoolean("allowChatColor", true);
-			allowGuildPrefix = SettingsConfig.getBoolean("allowGuildPrefix", true);
-			allowChatFormat = SettingsConfig.getBoolean("allowChatFormat", true);
-			allowJoinPermissions = SettingsConfig.getBoolean("allowJoinPermissions", false);
-			allowPickUpRestrictions = SettingsConfig.getBoolean("allowPickUpRestrictions", true);
-			allowOtherGuildWithinProtection = SettingsConfig.getBoolean("allowOtherGuildWithinProtection", true);
-			allowJoinDefaultGuild = SettingsConfig.getBoolean("allowJoinDefaultGuild", true);
-			allowGuildRestrictions = SettingsConfig.getBoolean("allowGuildRestrictions", true);
-			allowGuildNameOnBroadcast = SettingsConfig.getBoolean("allowGuildNameOnBroadcast", true);
-
-			setGuildProtectionBarrier = SettingsConfig.getInt("setGuildProtectionBarrier", 50);
-			setBaseDelay = SettingsConfig.getInt("setBaseDelay", 0);
-			
-			chatPrefix = SettingsConfig.getString("chatPrefix", "<");
-			chatSuffix = SettingsConfig.getString("chatSuffix", "> ");
-			guildsColor = SettingsConfig.getString("guildsColor", "&b");
-			defaultGuild = SettingsConfig.getString("defaultGuild", "test");
-			
+		for (Settings s : Settings.values()) {
+			if (SettingsConfig.isSet(s.toString())) {
+				if (s.isBoolean())
+					s.setSetting(SettingsConfig.getBoolean(s.toString()));
+				if (s.isInteger())
+					s.setSetting(SettingsConfig.getInt(s.toString()));
+				if (s.isString())
+					s.setSetting(SettingsConfig.getString(s.toString()));
+				if (s.isLong())
+					s.setSetting(SettingsConfig.getLong(s.toString()));
+			}
 		}
 		
 	}
 	
 	public void saveMessages() {
 		
-		console("Saving messages.yml");
+		sendConsole("Saving messages.yml");
 		
 		MessagesConfigFile = new File(getDataFolder(), "messages.yml");
 		MessagesConfig = YamlConfiguration.loadConfiguration(MessagesConfigFile);
@@ -278,6 +250,16 @@ public class GuildsBasic extends JavaPlugin  {
 		if (defConfigStream != null) {
 		    YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
 		    MessagesConfig.setDefaults(defConfig);
+		}
+		
+		Set<String> keys = MessagesConfig.getConfigurationSection("").getKeys(false);
+		
+		for (String str : keys) {
+			MessagesConfig.set(str, null);
+		}
+		
+		for (MessageType m : MessageType.values()) {
+			MessagesConfig.set(m.toString(), m.getMessage());
 		}
 		
 		try {
@@ -291,7 +273,7 @@ public class GuildsBasic extends JavaPlugin  {
 	
 	public void saveSettings() {
 	
-		console("Saving settings.yml");
+		sendConsole("Saving settings.yml");
 		
 		SettingsConfigFile = new File(getDataFolder(), "settings.yml");
 		SettingsConfig = YamlConfiguration.loadConfiguration(SettingsConfigFile);
@@ -303,36 +285,14 @@ public class GuildsBasic extends JavaPlugin  {
 		}
 		
 		Set<String> keys = SettingsConfig.getConfigurationSection("").getKeys(false);
-			
+		
 		for (String str : keys) {
-				
 			SettingsConfig.set(str, null);
-
 		}
 		
-		SettingsConfig.set("allowChangeGuild", allowChangeGuild);
-		SettingsConfig.set("allowNoGuild", allowNoGuild);
-		SettingsConfig.set("allowGuildPVP", allowGuildPVP);
-		SettingsConfig.set("allowBaseOnDeath", allowBaseOnDeath);
-		SettingsConfig.set("allowGuildProtection", allowGuildProtection);
-		SettingsConfig.set("allowDamageAnimationOnZero", allowDamageAnimationOnZero);
-		SettingsConfig.set("allowChatColor", allowChatColor);
-		SettingsConfig.set("allowGuildPrefix", allowGuildPrefix);
-		SettingsConfig.set("allowChatFormat", allowChatFormat);
-		SettingsConfig.set("allowJoinPermissions", allowJoinPermissions);
-		SettingsConfig.set("allowPickUpRestrictions", allowPickUpRestrictions);
-		SettingsConfig.set("allowOtherGuildWithinProtection", allowOtherGuildWithinProtection);
-		SettingsConfig.set("allowJoinDefaultGuild", allowJoinDefaultGuild);
-		SettingsConfig.set("allowGuildRestrictions", allowGuildRestrictions);
-		SettingsConfig.set("allowGuildNameOnBroadcast", allowGuildNameOnBroadcast);
-		
-		SettingsConfig.set("setGuildProtectionBarrier", setGuildProtectionBarrier);
-		SettingsConfig.set("setBaseDelay", setBaseDelay);
-				
-		SettingsConfig.set("chatPrefix", chatPrefix);
-		SettingsConfig.set("chatSuffix", chatSuffix);
-		SettingsConfig.set("guildsColor", guildsColor);
-		SettingsConfig.set("defaultGuild", defaultGuild);
+		for (Settings s : Settings.values()) {
+			SettingsConfig.set(s.toString(), s.getSetting());
+		}
 		
 		try {
 			SettingsConfig.options().copyDefaults(true);
@@ -345,7 +305,7 @@ public class GuildsBasic extends JavaPlugin  {
 	
 	public void loadGuilds() {
 		
-		console("Loading guilds.yml");
+		sendConsole("Loading guilds.yml");
 		
 		GuildsList.clear();
 		
@@ -372,53 +332,115 @@ public class GuildsBasic extends JavaPlugin  {
 	
 	public void loadGuild(String str) {
 		
+		String path = "";
+		
 		Guild guild = new Guild();
 		GuildsList.add(guild);
 		
 		guild.setName(str);
-		guild.setPlayerPrefix(GuildsConfig.getString(str + ".settings.prefix", ""));
-		guild.setPlayerSuffix(GuildsConfig.getString(str + ".settings.suffix", ""));
 		
-		World world = Bukkit.getWorld(GuildsConfig.getString(str + ".base.world", "world"));
-		if (world == null) world = Bukkit.getWorlds().get(0);
+		path = str + ".Settings";
+	
+		if (GuildsConfig.isSet(path)) {
+			guild.setColor(GuildsConfig.getString(str + ".Settings.Color", ""));
+			guild.setPlayerPrefix(GuildsConfig.getString(str + ".Settings.Prefix", ""));
+			guild.setPlayerSuffix(GuildsConfig.getString(str + ".Settings.Suffix", ""));
+		} else {
+			guild.setColor(GuildsConfig.getString(str + ".settings.color", ""));
+			guild.setPlayerPrefix(GuildsConfig.getString(str + ".settings.prefix", ""));
+			guild.setPlayerSuffix(GuildsConfig.getString(str + ".settings.suffix", ""));
+		}
 		
-		double x = GuildsConfig.getDouble(str + ".base.x", 0);
-		double y = GuildsConfig.getDouble(str + ".base.y", 0);
-		double z = GuildsConfig.getDouble(str + ".base.z", 0);
-		float yaw = (float) GuildsConfig.getDouble(str + ".base.yaw", 0);
-		float pitch = (float) GuildsConfig.getDouble(str + ".base.pitch", 0);
+		path = str + ".Base";
 		
-		guild.setBase(new Location(world, x, y, z, yaw, pitch));
+		if (GuildsConfig.isSet(path)) {
+			World world = Bukkit.getWorld(GuildsConfig.getString(str + ".Base.World", "world"));
+			if (world == null) world = Bukkit.getWorlds().get(0);
+			double x = GuildsConfig.getDouble(str + ".Base.X", 0);
+			double y = GuildsConfig.getDouble(str + ".Base.Y", 0);
+			double z = GuildsConfig.getDouble(str + ".Base.Z", 0);
+			float yaw = (float) GuildsConfig.getDouble(str + ".Base.Yaw", 0);
+			float pitch = (float) GuildsConfig.getDouble(str + ".Base.Pitch", 0);
+			guild.setBase(new Location(world, x, y, z, yaw, pitch));
+		} else {
+			World world = Bukkit.getWorld(GuildsConfig.getString(str + ".base.world", "world"));
+			if (world == null) world = Bukkit.getWorlds().get(0);
+			double x = GuildsConfig.getDouble(str + ".base.x", 0);
+			double y = GuildsConfig.getDouble(str + ".base.y", 0);
+			double z = GuildsConfig.getDouble(str + ".base.z", 0);
+			float yaw = (float) GuildsConfig.getDouble(str + ".base.yaw", 0);
+			float pitch = (float) GuildsConfig.getDouble(str + ".base.pitch", 0);
+			guild.setBase(new Location(world, x, y, z, yaw, pitch));
+		}
 		
-		for (World w : Bukkit.getServer().getWorlds()) {
-			if (GuildsConfig.getBoolean(str + ".worlds." + w.getName(), false)) {
-				guild.addWorld(w);
+		path = str + ".Worlds";
+		
+		if (GuildsConfig.isSet(path)) {
+			for (World w : Bukkit.getServer().getWorlds()) {
+				if (GuildsConfig.getBoolean(str + ".Worlds." + w.getName(), false)) {
+					guild.addWorld(w);
+				}
+			}
+		} else {
+			for (World w : Bukkit.getServer().getWorlds()) {
+				if (GuildsConfig.getBoolean(str + ".worlds." + w.getName(), false)) {
+					guild.addWorld(w);
+				}
 			}
 		}
 		
-		for (Biome b : Biome.values()) {
-			if (GuildsConfig.getBoolean(str + ".biomes." + b.name(), false)) {
-				guild.addBiome(b);
+		path = str + ".Biomes";
+		
+		if (GuildsConfig.isSet(path)) {
+			for (Biome b : Biome.values()) {
+				if (GuildsConfig.getBoolean(str + ".Biomes." + b.name(), false)) {
+					guild.addBiome(b);
+				}
+			}
+		} else {
+			for (Biome b : Biome.values()) {
+				if (GuildsConfig.getBoolean(str + ".biomes." + b.name(), false)) {
+					guild.addBiome(b);
+				}
 			}
 		}
 		
-		for (ProficiencyType p : ProficiencyType.values()) {
-			guild.addProficiency(new Proficiency(p, GuildsConfig.getBoolean(str + ".proficiencies." + p.toString() + ".Active", false), GuildsConfig.getDouble(str + ".proficiencies." + p.toString() + ".Power", 1.0), GuildsConfig.getLong(str + ".proficiencies." + p.toString() + ".CoolDown", (long) 0), GuildsConfig.getInt(str + ".proficiencies." + p.toString() + ".Ticks", 0)));
+		path = str + ".Proficiencies";
+		
+		if (GuildsConfig.isSet(path)) {
+			path = str + ".Proficiencies.";
+			for (ProficiencyType p : ProficiencyType.values()) {		
+				guild.addProficiency(new Proficiency(p, GuildsConfig.getBoolean(path + p.toString() + ".Active", false), GuildsConfig.getDouble(path + p.toString() + ".Power", 1), GuildsConfig.getLong(path + p.toString() + ".CoolDown", 0), GuildsConfig.getInt(path + p.toString() + ".Ticks", 0), GuildsConfig.getInt(path + p.toString() + ".Minimum", 0), GuildsConfig.getInt(path + p.toString() + ".Maximum", 0), GuildsConfig.getInt(path + p.toString() + ".Item", 0), this));
+			}
+		} else {
+			for (ProficiencyType p : ProficiencyType.values()) {
+				if (p.wasAttribute()) {
+					path = str + ".attributes.";
+					guild.addProficiency(new Proficiency(p, GuildsConfig.getBoolean(path + p.toString() + ".Active", false), GuildsConfig.getDouble(path + p.toString(), 1), GuildsConfig.getLong(path + p.toString() + ".CoolDown", 0), GuildsConfig.getInt(path + p.toString() + ".Ticks", 0), GuildsConfig.getInt(path + p.toString() + ".Minimum", 0), GuildsConfig.getInt(path + p.toString() + ".Maximum", 0), GuildsConfig.getInt(path + p.toString() + ".Item", 0), this));
+				} else {
+					path = str + ".proficiencies.";
+					guild.addProficiency(new Proficiency(p, GuildsConfig.getBoolean(path + p.toString() + ".Active", false), GuildsConfig.getDouble(path + p.toString() + ".Power", 1), GuildsConfig.getLong(path + p.toString() + ".CoolDown", 0), GuildsConfig.getInt(path + p.toString() + ".Ticks", 0), GuildsConfig.getInt(path + p.toString() + ".Minimum", 0), GuildsConfig.getInt(path + p.toString() + ".Maximum", 0), GuildsConfig.getInt(path + p.toString() + ".Item", 0), this));
+				}
+			}
 		}
 		
-		for (AttributeType a : AttributeType.values()) {
-			guild.addAttribute(new Attribute(a, GuildsConfig.getDouble(str + ".attributes." + a.toString(), 1)));
-		}
+		path = str + ".Restrictions";
 		
-		for (Integer i : GuildsConfig.getIntegerList(str + ".restrictions")) {
-			guild.addRestriction(i);
+		if (GuildsConfig.isSet(path)) {
+			for (Integer i : GuildsConfig.getIntegerList(str + ".Restrictions")) {
+				guild.addRestriction(i);
+			}
+		} else {
+			for (Integer i : GuildsConfig.getIntegerList(str + ".restrictions")) {
+				guild.addRestriction(i);
+			}
 		}
 		
 	}
 	
 	public void saveGuilds() {
 
-		console("Saving guilds.yml");
+		sendConsole("Saving guilds.yml");
 		
 		GuildsConfigFile = new File(getDataFolder(), "guilds.yml");
 		GuildsConfig = YamlConfiguration.loadConfiguration(GuildsConfigFile);
@@ -441,41 +463,48 @@ public class GuildsBasic extends JavaPlugin  {
 				
 				String name = g.getName();
 				
-				GuildsConfig.set(name + ".settings.prefix", g.getPlayerPrefix());
-				GuildsConfig.set(name + ".settings.suffix", g.getPlayerSuffix());
-				
-				for (Attribute a : g.getAttributes()) {
-					GuildsConfig.set(name + ".attributes." + a.getAttributeType().toString(), a.getPower());
-				}
-				
+				GuildsConfig.set(name + ".Settings.Color", g.getColor());
+				GuildsConfig.set(name + ".Settings.Prefix", g.getPlayerPrefix());
+				GuildsConfig.set(name + ".Settings.Suffix", g.getPlayerSuffix());
+								
 				for (Proficiency p : g.getProficiencies()) {
-					GuildsConfig.set(name + ".proficiencies." + p.getProficiencyType().toString() + ".Active", p.getActive());
-					GuildsConfig.set(name + ".proficiencies." + p.getProficiencyType().toString() + ".Power", p.getPower());
-					GuildsConfig.set(name + ".proficiencies." + p.getProficiencyType().toString() + ".CoolDown", p.getCoolDown());
-					GuildsConfig.set(name + ".proficiencies." + p.getProficiencyType().toString() + ".Ticks", p.getTicks());
+					GuildsConfig.set(name + ".Proficiencies." + p.getProficiencyType().toString() + ".Active", p.getActive());
+					if (p.getProficiencyType().hasPower()) {
+						GuildsConfig.set(name + ".Proficiencies." + p.getProficiencyType().toString() + ".Power", p.getPower());
+					}
+					if (p.getProficiencyType().hasCoolDown()) {
+						GuildsConfig.set(name + ".Proficiencies." + p.getProficiencyType().toString() + ".CoolDown", p.getCoolDown());
+					}
+					if (p.getProficiencyType().hasTicks()) {
+						GuildsConfig.set(name + ".Proficiencies." + p.getProficiencyType().toString() + ".Ticks", p.getTicks());
+					}
+					if (p.getProficiencyType().hasMinMax()) {
+						GuildsConfig.set(name + ".Proficiencies." + p.getProficiencyType().toString() + ".Minimum", p.getMinimum());
+						GuildsConfig.set(name + ".Proficiencies." + p.getProficiencyType().toString() + ".Maximum", p.getMaximum());
+					}
 				}
 
 				for (World w : Bukkit.getServer().getWorlds()) {
-					if (g.getWorlds().contains(w)) GuildsConfig.set(name + ".worlds." + w.getName(), true);
-					else GuildsConfig.set(name + ".worlds." + w.getName(), false);
+					if (g.getWorlds().contains(w)) GuildsConfig.set(name + ".Worlds." + w.getName(), true);
+					else GuildsConfig.set(name + ".Worlds." + w.getName(), false);
 				}
 				
 				for (Biome b : Biome.values()) {
-					if (g.getBiomes().contains(b)) GuildsConfig.set(name + ".biomes." + b.toString(), true);
-					else GuildsConfig.set(name + ".biomes." + b.toString(), false);				
+					if (g.getBiomes().contains(b)) GuildsConfig.set(name + ".Biomes." + b.toString(), true);
+					else GuildsConfig.set(name + ".Biomes." + b.toString(), false);				
 				}
 				
 				Integer[] saveRestrictions = new Integer[ g.getRestrictions().size() ];
 				saveRestrictions = g.getRestrictions().toArray(saveRestrictions);
-				GuildsConfig.set(name + ".restrictions", null);
-				GuildsConfig.set(name + ".restrictions", Arrays.asList(saveRestrictions));
+				GuildsConfig.set(name + ".Restrictions", null);
+				GuildsConfig.set(name + ".Restrictions", Arrays.asList(saveRestrictions));
 				
-				GuildsConfig.set(name + ".base.world", g.getBase().getWorld().getName());
-				GuildsConfig.set(name + ".base.x", g.getBase().getX());
-				GuildsConfig.set(name + ".base.y", g.getBase().getY());
-				GuildsConfig.set(name + ".base.z", g.getBase().getZ());
-				GuildsConfig.set(name + ".base.yaw", g.getBase().getYaw());
-				GuildsConfig.set(name + ".base.pitch", g.getBase().getPitch());				
+				GuildsConfig.set(name + ".Base.World", g.getBase().getWorld().getName());
+				GuildsConfig.set(name + ".Base.X", g.getBase().getX());
+				GuildsConfig.set(name + ".Base.Y", g.getBase().getY());
+				GuildsConfig.set(name + ".Base.Z", g.getBase().getZ());
+				GuildsConfig.set(name + ".Base.Yaw", g.getBase().getYaw());
+				GuildsConfig.set(name + ".Base.Pitch", g.getBase().getPitch());				
 				
 			}
 			
@@ -491,7 +520,7 @@ public class GuildsBasic extends JavaPlugin  {
 	
 	public void loadPlayers() {
 		
-		console("Loading players.yml");
+		sendConsole("Loading players.yml");
 		
 		PlayersConfigFile = new File(getDataFolder(), "players.yml");
 		PlayersConfig = YamlConfiguration.loadConfiguration(PlayersConfigFile);
@@ -526,7 +555,7 @@ public class GuildsBasic extends JavaPlugin  {
 	
 	public void savePlayers() {
 
-		console("Saving players.yml");
+		sendConsole("Saving players.yml");
 		
 		PlayersConfigFile = new File(getDataFolder(), "players.yml");
 		PlayersConfig = YamlConfiguration.loadConfiguration(PlayersConfigFile);
@@ -571,13 +600,13 @@ public class GuildsBasic extends JavaPlugin  {
 		
 		if (guild != null) {
 			GuildsList.remove(guild);
-			msg(10, sender, "", g);
+			new Message(MessageType.GUILD_DELETED, sender, guild, this);
 			saveGuilds();
 			loadGuilds();
 			savePlayers();
 			loadPlayers();
 		} else {
-			msg(2, sender, "", g);
+			new Message(MessageType.GUILD_NOT_RECOGNISED, sender, guild, this);
 		}
 		
 	}
@@ -587,13 +616,14 @@ public class GuildsBasic extends JavaPlugin  {
 		Guild guild = getGuild(g);
 		
 		if (guild != null) {
-			msg(9, sender, "", g);
+			new Message(MessageType.GUILD_EXISTS, sender, guild, this);
 		} else {
 			Guild gld = new Guild();
 			gld.setName(g);
+			gld.New(this);
 			GuildsList.add(gld);
 			gld.setBase(sender.getLocation());
-			msg(8, sender, "", g);
+			new Message(MessageType.GUILD_CREATED, sender, guild, this);
 			saveGuilds();
 			loadGuilds();
 		}
@@ -606,11 +636,11 @@ public class GuildsBasic extends JavaPlugin  {
 		
 		if (guild != null) {
 			guild.setBase(sender.getLocation());
-			msg(7, sender, "", g);
+			new Message(MessageType.BASE_SET, sender, guild, this);
 			saveGuilds();
 			loadGuilds();
 		} else {
-			msg(2, sender, "", g);
+			new Message(MessageType.GUILD_NOT_RECOGNISED, sender, guild, this);
 		}
 		
 	}
@@ -625,10 +655,10 @@ public class GuildsBasic extends JavaPlugin  {
 				
 			}
 			if (player.equals(sender)) {
-				msg(4, sender, "", "");
+				new Message(MessageType.GUILD_LEAVE, sender, this);
 			} else {
-				msg(5, sender, p, "");
-				msg(6, player, "", "");
+				new Message(MessageType.PLAYER_REMOVED_FROM_GUILD, sender, player, this);
+				new Message(MessageType.YOU_REMOVED_FROM_GUILD, player, this);
 			}
 			savePlayers();
 			loadPlayers();
@@ -652,8 +682,12 @@ public class GuildsBasic extends JavaPlugin  {
 				Bukkit.getScheduler().cancelTask(TasksStorm.get(p));
 				TasksStorm.remove(p);
 			}
+			if (TasksAltitude.containsKey(p)) {
+				Bukkit.getScheduler().cancelTask(TasksAltitude.get(p));
+				TasksAltitude.remove(p);
+			}
 		} else {
-			if (sender != null) msg(3, sender, p, "");
+			if (sender != null) new Message(MessageType.PLAYER_NOT_RECOGNISED, sender, p, this);
 		}
 		
 	}
@@ -666,7 +700,7 @@ public class GuildsBasic extends JavaPlugin  {
 		
 		if (player != null) {
 			if (guild != null) {
-				if (allowChangeGuild) {
+				if (getEnabled(Settings.ENABLE_CHANGE_GUILD)) {
 					if (PlayerGuild.containsKey(p)) {
 						PlayerGuild.remove(p);
 					}
@@ -693,8 +727,12 @@ public class GuildsBasic extends JavaPlugin  {
 						Bukkit.getScheduler().cancelTask(TasksStorm.get(p));
 						TasksStorm.remove(p);
 					}
-					msg(36, player, p, g);
-					if (sender != null) msg(37, sender, p, g);
+					if (TasksAltitude.containsKey(p)) {
+						Bukkit.getScheduler().cancelTask(TasksAltitude.get(p));
+						TasksAltitude.remove(p);
+					}
+					new Message(MessageType.GUILD_JOIN, player, player, guild, this);
+					if (sender != null) new Message(MessageType.PLAYER_GUILD_JOIN, sender, player, guild, this);
 				} else {
 					if (getPlayerGuild(player) == null) {
 						if (PlayerGuild.containsKey(p)) {
@@ -723,67 +761,55 @@ public class GuildsBasic extends JavaPlugin  {
 							Bukkit.getScheduler().cancelTask(TasksStorm.get(p));
 							TasksStorm.remove(p);
 						}
-						msg(36, player, p, g);
-						if (sender != null) msg(37, sender, p, g);
+						if (TasksAltitude.containsKey(p)) {
+							Bukkit.getScheduler().cancelTask(TasksAltitude.get(p));
+							TasksAltitude.remove(p);
+						}
+						new Message(MessageType.GUILD_JOIN, player, player, guild, this);
+						if (sender != null) new Message(MessageType.PLAYER_GUILD_JOIN, sender, player, guild, this);
 					} else {
-						if (sender != null) msg(1, sender, p, "");
+						if (sender != null) new Message(MessageType.ALREADY_IN_GUILD, sender, player, this);
 					}
 				}
 			} else {
-				if (sender != null) msg(2, sender, "", g);
+				if (sender != null) new Message(MessageType.GUILD_NOT_RECOGNISED, sender, g, this);
 			}
 		} else {
-			if (sender != null) msg(3, sender, p, "");
+			if (sender != null) new Message(MessageType.PLAYER_NOT_RECOGNISED, sender, p, this);
 		}
-		
-	}
-
-	public void msg(int m, Player s, String p, String g) {
-		
-		String message = messages[m];
-		String player = p;
-		String guild = g;
-		Guild gld = getGuild(g);
-		
-		if (message == null) {
-			message = "&emessage " + m + " missing from messages.yml";
-		}
-		
-		message = message.replaceAll("/p/", player);
-		message = message.replaceAll("/g/", guild);
-		if (gld != null) {
-			if (allowGuildNameOnBroadcast) {
-				message = guildsColor + "[" + gld.getName() + "] " + message;
-			} else {
-				message = guildsColor + "[Guilds] " + message;
-			}
-		} else {
-			message = guildsColor + "[Guilds] " + message;
-		}
-		message = message.replaceAll("&([0-9a-fk-or])", "\u00A7$1");
-
-		s.sendMessage(message);
-		
-		return;
 		
 	}
 	
-	public void msg2(int m, String p, String g) {
+	public void sendMessage(Player p, String msg) {
+
+		String prefix = "";
 		
-		String message = messages[m];
-		String player = p;
-		String guild = g;
-		
-		if (message == null) {
-			message = "&emessage " + m + " missing from messages.yml";
+		if (getEnabled(Settings.ENABLE_CHAT_COLOR)) {
+			msg = msg.replaceAll("&([0-9a-fk-or])", "\u00A7$1");
 		}
 		
-		message = message.replaceAll("/p/", player);
-		message = message.replaceAll("/g/", guild);
-
-		console(message);
+		if (getEnabled(Settings.ENABLE_GUILD_NAME_ON_BROADCAST)) {
+			Guild g = getPlayerGuild(p);
+			if (g != null) {
+				prefix = getSetting(Settings.SET_GUILDS_BROADCAST_COLOR) + "[" + g.getName() + "] ";
+			} else {
+				prefix = getSetting(Settings.SET_GUILDS_BROADCAST_COLOR) + "[Guilds] ";
+			}
+		} else {
+			prefix = getSetting(Settings.SET_GUILDS_BROADCAST_COLOR) + "[Guilds] ";
+		}
 		
-		return;
+		prefix = prefix.replaceAll("&([0-9a-fk-or])", "\u00A7$1");
+		
+		p.sendMessage(prefix + msg);
+		
+	}
+	
+	public void sendConsole(String msg) {
+
+		msg = "[Guilds] " + msg;
+		msg = msg.replaceAll("&([0-9a-fk-or])", "");
+		System.out.println(msg);
 		
 	}
 
@@ -799,7 +825,7 @@ public class GuildsBasic extends JavaPlugin  {
 	
 	public void hidePlayer(Player p) {
 		for (Player online : Bukkit.getOnlinePlayers()) {
-			online.hidePlayer(p);
+			if (!getPlayerGuild(p).getProficiency(ProficiencyType.SEE_INVISIBLE).getActive()) online.hidePlayer(p);
 		}
 		if (!TasksInvisible.containsKey(p)) {
 			TasksInvisible.put(p, new Scheduler(this).invisible(p));
@@ -816,6 +842,91 @@ public class GuildsBasic extends JavaPlugin  {
 
 		return false;
 	
+	}
+	
+	public boolean isPick(int i) {
+		
+		if (i == 274) return true;
+		if (i == 270) return true;
+		if (i == 257) return true;
+		if (i == 285) return true;
+		if (i == 278) return true;
+	
+		return false;
+
+	}
+	
+	public boolean isAxe(int i) {
+		
+		if (i == 271) return true;
+		if (i == 275) return true;
+		if (i == 258) return true;
+		if (i == 286) return true;
+		if (i == 279) return true;
+	
+		return false;
+
+	}
+	
+	public boolean isShear(int i) {
+		
+		if (i == 359) return true;
+	
+		return false;
+
+	}
+	
+	public boolean isShovel(int i) {
+		
+		if (i == 269) return true;
+		if (i == 273) return true;
+		if (i == 256) return true;
+		if (i == 284) return true;
+		if (i == 277) return true;
+	
+		return false;
+
+	}
+	
+	public boolean getEnabled(Settings s) {
+		Object setting = s.getSetting();
+		if (s.isBoolean())
+			return ((Boolean) setting).booleanValue();
+		else
+			return false;
+	}
+	
+	public int getIntSetting(Settings s) {
+		Object setting = s.getSetting();
+		if (s.isInteger())
+			return ((Integer) setting).intValue();
+		else
+			return 0;
+	}
+	
+	public long getLongSetting(Settings s) {
+		Object setting = s.getSetting();
+		if (s.isLong())
+			return ((Long) setting).longValue();
+		else
+			return 0;
+	}
+	
+	public String getSetting(Settings s) {
+		Object setting = s.getSetting();
+		if (s.isString())
+			return ((String) setting).toString();
+		else
+			return "";
+	}
+	
+	public void printGuild(Guild g) {
+		sendConsole(g.getName());
+		for (Proficiency p : g.getProficiencies()) {
+			sendConsole("-" + p.getProficiencyType().toString());
+			sendConsole("  -" + p.getActive());
+			sendConsole("  -" + p.getPower());
+		}
 	}
 	
 }

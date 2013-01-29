@@ -3,8 +3,6 @@ package me.avocardo.guilds;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.avocardo.guilds.utilities.Attribute;
-import me.avocardo.guilds.utilities.AttributeType;
 import me.avocardo.guilds.utilities.Proficiency;
 import me.avocardo.guilds.utilities.ProficiencyType;
 
@@ -15,6 +13,7 @@ import org.bukkit.block.Biome;
 public class Guild {
 	
 	private String NAME;
+	private String COLOR;
 	private String PLAYER_PREFIX;
 	private String PLAYER_SUFFIX;
 	
@@ -24,8 +23,20 @@ public class Guild {
 	private List<World> WORLDS = new ArrayList<World>();	
 	private List<Biome> BIOMES = new ArrayList<Biome>();
 	private List<Proficiency> PROFICIENCIES = new ArrayList<Proficiency>();
-	private List<Attribute> ATTRIBUTES = new ArrayList<Attribute>();
 
+	public void New(GuildsBasic GuildsBasic) {
+		setColor("");
+		setPlayerPrefix("");
+		setPlayerSuffix("");
+		for (ProficiencyType p : ProficiencyType.values()) {
+			if (p.equals(ProficiencyType.RECOVERHEALTH)) {
+				this.addProficiency(new Proficiency(p, true, 1, 0, 0, 0, 0, 0, GuildsBasic));
+			} else {
+				this.addProficiency(new Proficiency(p, false, 1, 0, 0, 0, 0, 0, GuildsBasic));
+			}
+		}
+	}
+	
 	public List<Integer> getRestrictions() {
 		return RESTRICTIONS;
 	}
@@ -65,21 +76,6 @@ public class Guild {
 		return null;
 	}
 	
-	public List<Attribute> getAttributes() {
-		return ATTRIBUTES;
-	}
-	
-	public void addAttribute(Attribute a) {
-		ATTRIBUTES.add(a);
-	}
-	
-	public Attribute getAttribute(AttributeType AttributeType) {
-		for (Attribute p : ATTRIBUTES)
-			if (p.getAttributeType().equals(AttributeType))
-				return p;
-		return null;
-	}
-	
 	public Location getBase() {
 		return LOCATION;
 	}
@@ -98,6 +94,14 @@ public class Guild {
 
 	public void setName(String NAME) {
 		this.NAME = NAME;
+	}
+	
+	public String getColor() {
+		return COLOR;
+	}
+
+	public void setColor(String COLOR) {
+		this.COLOR = COLOR;
 	}
 
 	public String getPlayerPrefix() {
