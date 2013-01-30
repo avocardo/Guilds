@@ -202,12 +202,14 @@ public class BlockListener implements Listener {
 			
 			Location base = g.getBase();
 			
-			if (base.distance(loc) > (double) GuildsBasic.getIntSetting(Settings.SET_PROTECTION_BARRIER)) {
-				// Outside distance... 
-			} else {
-				if (GuildsBasic.getPlayerGuild(p) != g) {
-					new Message(MessageType, p, g, GuildsBasic);
-					return false;
+			if (base.getWorld().equals(loc.getWorld())) {
+				if (base.distance(loc) > (double) GuildsBasic.getIntSetting(Settings.SET_PROTECTION_BARRIER)) {
+					// Outside distance... 
+				} else {
+					if (GuildsBasic.getPlayerGuild(p) != g) {
+						new Message(MessageType, p, g, GuildsBasic);
+						return false;
+					}
 				}
 			}
 			

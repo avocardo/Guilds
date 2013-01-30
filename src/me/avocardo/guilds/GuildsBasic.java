@@ -16,7 +16,6 @@ import me.avocardo.guilds.listeners.BlockListener;
 import me.avocardo.guilds.listeners.ChatListener;
 import me.avocardo.guilds.listeners.PlayerListener;
 import me.avocardo.guilds.listeners.TagListener;
-import me.avocardo.guilds.messages.Message;
 import me.avocardo.guilds.messages.MessageType;
 import me.avocardo.guilds.utilities.Proficiency;
 import me.avocardo.guilds.utilities.ProficiencyType;
@@ -594,198 +593,14 @@ public class GuildsBasic extends JavaPlugin  {
 		
 	}
 	
-	public void remove(String g, Player sender) {
-		
-		Guild guild = getGuild(g);
-		
-		if (guild != null) {
-			GuildsList.remove(guild);
-			new Message(MessageType.GUILD_DELETED, sender, guild, this);
-			saveGuilds();
-			loadGuilds();
-			savePlayers();
-			loadPlayers();
-		} else {
-			new Message(MessageType.GUILD_NOT_RECOGNISED, sender, guild, this);
-		}
-		
-	}
-	
-	public void create(String g, Player sender) {
-		
-		Guild guild = getGuild(g);
-		
-		if (guild != null) {
-			new Message(MessageType.GUILD_EXISTS, sender, guild, this);
-		} else {
-			Guild gld = new Guild();
-			gld.setName(g);
-			gld.New(this);
-			GuildsList.add(gld);
-			gld.setBase(sender.getLocation());
-			new Message(MessageType.GUILD_CREATED, sender, guild, this);
-			saveGuilds();
-			loadGuilds();
-		}
-		
-	}
-	
-	public void setbase(String g, Player sender) {
-		
-		Guild guild = getGuild(g);
-		
-		if (guild != null) {
-			guild.setBase(sender.getLocation());
-			new Message(MessageType.BASE_SET, sender, guild, this);
-			saveGuilds();
-			loadGuilds();
-		} else {
-			new Message(MessageType.GUILD_NOT_RECOGNISED, sender, guild, this);
-		}
-		
-	}
-	
-	public void leave(String p, Player sender) {
-		
-		Player player = Bukkit.getPlayer(p);
-		
-		if (player != null) {
-			if (PlayerGuild.containsKey(p)) {
-				PlayerGuild.remove(p);
-				
-			}
-			if (player.equals(sender)) {
-				new Message(MessageType.GUILD_LEAVE, sender, this);
-			} else {
-				new Message(MessageType.PLAYER_REMOVED_FROM_GUILD, sender, player, this);
-				new Message(MessageType.YOU_REMOVED_FROM_GUILD, player, this);
-			}
-			savePlayers();
-			loadPlayers();
-			if (TasksWater.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(TasksWater.get(p));
-				TasksWater.remove(p);
-			}
-			if (TasksLand.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(TasksLand.get(p));
-				TasksLand.remove(p);
-			}
-			if (TasksSun.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(TasksSun.get(p));
-				TasksSun.remove(p);
-			}
-			if (TasksMoon.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(TasksMoon.get(p));
-				TasksMoon.remove(p);
-			}
-			if (TasksStorm.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(TasksStorm.get(p));
-				TasksStorm.remove(p);
-			}
-			if (TasksAltitude.containsKey(p)) {
-				Bukkit.getScheduler().cancelTask(TasksAltitude.get(p));
-				TasksAltitude.remove(p);
-			}
-		} else {
-			if (sender != null) new Message(MessageType.PLAYER_NOT_RECOGNISED, sender, p, this);
-		}
-		
-	}
-	
-	public void join(String p, String g, Player sender) {
-		
-		Player player = Bukkit.getPlayer(p);
-		
-		Guild guild = getGuild(g);
-		
-		if (player != null) {
-			if (guild != null) {
-				if (getEnabled(Settings.ENABLE_CHANGE_GUILD)) {
-					if (PlayerGuild.containsKey(p)) {
-						PlayerGuild.remove(p);
-					}
-					PlayerGuild.put(p, guild);
-					savePlayers();
-					loadPlayers();
-					if (TasksWater.containsKey(p)) {
-						Bukkit.getScheduler().cancelTask(TasksWater.get(p));
-						TasksWater.remove(p);
-					}
-					if (TasksLand.containsKey(p)) {
-						Bukkit.getScheduler().cancelTask(TasksLand.get(p));
-						TasksLand.remove(p);
-					}
-					if (TasksSun.containsKey(p)) {
-						Bukkit.getScheduler().cancelTask(TasksSun.get(p));
-						TasksSun.remove(p);
-					}
-					if (TasksMoon.containsKey(p)) {
-						Bukkit.getScheduler().cancelTask(TasksMoon.get(p));
-						TasksMoon.remove(p);
-					}
-					if (TasksStorm.containsKey(p)) {
-						Bukkit.getScheduler().cancelTask(TasksStorm.get(p));
-						TasksStorm.remove(p);
-					}
-					if (TasksAltitude.containsKey(p)) {
-						Bukkit.getScheduler().cancelTask(TasksAltitude.get(p));
-						TasksAltitude.remove(p);
-					}
-					new Message(MessageType.GUILD_JOIN, player, player, guild, this);
-					if (sender != null) new Message(MessageType.PLAYER_GUILD_JOIN, sender, player, guild, this);
-				} else {
-					if (getPlayerGuild(player) == null) {
-						if (PlayerGuild.containsKey(p)) {
-							PlayerGuild.remove(p);
-						}
-						PlayerGuild.put(p, guild);
-						savePlayers();
-						loadPlayers();
-						if (TasksWater.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(TasksWater.get(p));
-							TasksWater.remove(p);
-						}
-						if (TasksLand.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(TasksLand.get(p));
-							TasksLand.remove(p);
-						}
-						if (TasksSun.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(TasksSun.get(p));
-							TasksSun.remove(p);
-						}
-						if (TasksMoon.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(TasksMoon.get(p));
-							TasksMoon.remove(p);
-						}
-						if (TasksStorm.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(TasksStorm.get(p));
-							TasksStorm.remove(p);
-						}
-						if (TasksAltitude.containsKey(p)) {
-							Bukkit.getScheduler().cancelTask(TasksAltitude.get(p));
-							TasksAltitude.remove(p);
-						}
-						new Message(MessageType.GUILD_JOIN, player, player, guild, this);
-						if (sender != null) new Message(MessageType.PLAYER_GUILD_JOIN, sender, player, guild, this);
-					} else {
-						if (sender != null) new Message(MessageType.ALREADY_IN_GUILD, sender, player, this);
-					}
-				}
-			} else {
-				if (sender != null) new Message(MessageType.GUILD_NOT_RECOGNISED, sender, g, this);
-			}
-		} else {
-			if (sender != null) new Message(MessageType.PLAYER_NOT_RECOGNISED, sender, p, this);
-		}
-		
-	}
-	
 	public void sendMessage(Player p, String msg) {
 
 		String prefix = "";
 		
 		if (getEnabled(Settings.ENABLE_CHAT_COLOR)) {
 			msg = msg.replaceAll("&([0-9a-fk-or])", "\u00A7$1");
+		} else {
+			msg = msg.replaceAll("&([0-9a-fk-or])", "");
 		}
 		
 		if (getEnabled(Settings.ENABLE_GUILD_NAME_ON_BROADCAST)) {
@@ -815,6 +630,33 @@ public class GuildsBasic extends JavaPlugin  {
 
 	public void clearScheduler() {
 		Bukkit.getScheduler().cancelAllTasks();
+	}
+	
+	public void clearPlayerScheduler(Player p) {
+		if (TasksWater.containsKey(p)) {
+			Bukkit.getScheduler().cancelTask(TasksWater.get(p));
+			TasksWater.remove(p);
+		}
+		if (TasksLand.containsKey(p)) {
+			Bukkit.getScheduler().cancelTask(TasksLand.get(p));
+			TasksLand.remove(p);
+		}
+		if (TasksSun.containsKey(p)) {
+			Bukkit.getScheduler().cancelTask(TasksSun.get(p));
+			TasksSun.remove(p);
+		}
+		if (TasksMoon.containsKey(p)) {
+			Bukkit.getScheduler().cancelTask(TasksMoon.get(p));
+			TasksMoon.remove(p);
+		}
+		if (TasksStorm.containsKey(p)) {
+			Bukkit.getScheduler().cancelTask(TasksStorm.get(p));
+			TasksStorm.remove(p);
+		}
+		if (TasksAltitude.containsKey(p)) {
+			Bukkit.getScheduler().cancelTask(TasksAltitude.get(p));
+			TasksAltitude.remove(p);
+		}
 	}
 		
 	public void showPlayer(Player p) {

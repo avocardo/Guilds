@@ -12,7 +12,8 @@ public class Message {
 		
 		String message = msg.getMessage();
 		
-		message = message.replaceAll("/p/", input1.getName());
+		if (message.contains("/p/")) message = message.replaceAll("/p/", input1.getName());
+		if (message.contains("/g/")) message = message.replaceAll("/g/", "");
 		
 		GuildsBasic.sendMessage(input1, message);
 		
@@ -22,7 +23,8 @@ public class Message {
 		
 		String message = msg.getMessage();
 		
-		message = message.replaceAll("/p/", input1);
+		if (message.contains("/p/")) message = message.replaceAll("/p/", input1);
+		if (message.contains("/g/")) message = message.replaceAll("/g/", input1);
 		
 		GuildsBasic.sendMessage(player, message);
 		
@@ -32,7 +34,9 @@ public class Message {
 		
 		String message = msg.getMessage();
 		
-		message = message.replaceAll("/p/", input1.toString());
+		if (message.contains("/s/")) message = message.replaceAll("/s/", input1.toString());
+		if (message.contains("/g/")) message = message.replaceAll("/g/", "");
+		if (message.contains("/p/")) message = message.replaceAll("/p/", "");
 		
 		GuildsBasic.sendMessage(player, message);
 		
@@ -42,7 +46,8 @@ public class Message {
 		
 		String message = msg.getMessage();
 		
-		message = message.replaceAll("/p/", input1.getName());
+		if (message.contains("/p/")) message = message.replaceAll("/p/", input1.getName());
+		if (message.contains("/g/")) message = message.replaceAll("/g/", "");
 		
 		GuildsBasic.sendMessage(player, message);
 		
@@ -52,7 +57,8 @@ public class Message {
 		
 		String message = msg.getMessage();
 		
-		message = message.replaceAll("/g/", input1.getName());
+		if (message.contains("/g/")) message = message.replaceAll("/g/", input1.getName());
+		if (message.contains("/p/")) message = message.replaceAll("/p/", "");
 		
 		GuildsBasic.sendMessage(player, message);
 		
@@ -62,8 +68,8 @@ public class Message {
 		
 		String message = msg.getMessage();
 		
-		message = message.replaceAll("/p/", input1.getName());
-		message = message.replaceAll("/g/", input2.getName());
+		if (message.contains("/p/")) message = message.replaceAll("/p/", input1.getName());
+		if (message.contains("/g/")) message = message.replaceAll("/g/", input2.getName());
 		
 		GuildsBasic.sendMessage(player, message);
 		

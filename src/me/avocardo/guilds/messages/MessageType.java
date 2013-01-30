@@ -42,7 +42,8 @@ public enum MessageType {
 	PLAYER_REMOVED_FROM_GUILD("&e/p/ was removed from their guild..."),
 	YOU_REMOVED_FROM_GUILD("&eyou were removed from your guild..."),
 	GUILD_NOT_RECOGNISED("&eguild /g/ not recognised..."),
-	PLAYER_NOT_RECOGNISED("&eplayer /p/ not recognised...");
+	PLAYER_NOT_RECOGNISED("&eplayer /p/ not recognised..."),
+	CONSOLE_ERROR("command not supported by console...");
     
     String str;
    
