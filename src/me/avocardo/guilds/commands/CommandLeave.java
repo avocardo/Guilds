@@ -29,6 +29,11 @@ public class CommandLeave {
 		
 		if (p.hasPermission("guilds.user.leave")) {
 			if (GuildsBasic.getEnabled(Settings.ENABLE_CHANGE_GUILD)) {
+				
+				if (GuildsBasic.getPlayerGuild(p) != null) {
+					GuildsBasic.getPlayerGuild(p).subtractOnline();
+				}
+				
 				if (GuildsBasic.PlayerGuild.containsKey(p)) {
 					GuildsBasic.PlayerGuild.remove(p);
 				}

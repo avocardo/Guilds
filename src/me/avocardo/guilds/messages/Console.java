@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 
 import me.avocardo.guilds.Guild;
 import me.avocardo.guilds.GuildsBasic;
+import me.avocardo.guilds.utilities.Settings;
 
 public class Console {
 	
@@ -39,6 +40,9 @@ public class Console {
 		
 		message = message.replaceAll("/p/", input1);
 		message = message.replaceAll("/g/", input1);
+		message = message.replaceAll("/s/", input1);
+		message = message.replaceAll("/m/", input1);
+		message = message.replaceAll("/a/", input1);
 		
 		GuildsBasic.sendConsole(message);
 		
@@ -50,6 +54,28 @@ public class Console {
 		
 		message = message.replaceAll("/p/", p.getName());
 		message = message.replaceAll("/g/", g.getName());
+		
+		GuildsBasic.sendConsole(message);
+		
+	}
+	
+	public Console(MessageType msg, Settings s, String input2, GuildsBasic GuildsBasic) {
+		
+		String message = msg.getMessage();
+		
+		message = message.replaceAll("/s/", s.toString());
+		message = message.replaceAll("/v/", input2);
+		
+		GuildsBasic.sendConsole(message);
+		
+	}
+	
+	public Console(MessageType msg, MessageType m, String input2, GuildsBasic GuildsBasic) {
+		
+		String message = msg.getMessage();
+		
+		message = message.replaceAll("/m/", m.toString());
+		message = message.replaceAll("/v/", input2);
 		
 		GuildsBasic.sendConsole(message);
 		

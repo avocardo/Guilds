@@ -31,6 +31,9 @@ public class CommandKick {
 			if (p.hasPermission("guilds.admin.kick")) {
 				Player player = Bukkit.getPlayer(args[1]);
 				if (player != null) {
+					if (GuildsBasic.getPlayerGuild(player) != null) {
+						GuildsBasic.getPlayerGuild(player).subtractOnline();
+					}
 					if (GuildsBasic.PlayerGuild.containsKey(player.getName())) {
 						GuildsBasic.PlayerGuild.remove(player.getName());
 					}
@@ -57,6 +60,9 @@ public class CommandKick {
 		if (args.length > 1) {
 			Player player = Bukkit.getPlayer(args[1]);
 			if (player != null) {
+				if (GuildsBasic.getPlayerGuild(player) != null) {
+					GuildsBasic.getPlayerGuild(player).subtractOnline();
+				}
 				if (GuildsBasic.PlayerGuild.containsKey(args[1])) {
 					GuildsBasic.PlayerGuild.remove(args[1]);
 				}

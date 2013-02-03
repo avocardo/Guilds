@@ -19,7 +19,6 @@ import me.avocardo.guilds.listeners.TagListener;
 import me.avocardo.guilds.messages.MessageType;
 import me.avocardo.guilds.utilities.Proficiency;
 import me.avocardo.guilds.utilities.ProficiencyType;
-import me.avocardo.guilds.utilities.Scheduler;
 import me.avocardo.guilds.utilities.Settings;
 
 import org.bukkit.Bukkit;
@@ -51,6 +50,8 @@ public class GuildsBasic extends JavaPlugin  {
 	private File MessagesConfigFile = null;
 
 	public Map <String, Guild> PlayerGuild = new HashMap <String, Guild>();
+	public Map <String, Long> PlayerJoined = new HashMap <String, Long>();
+	
 	public Map <Player, User> PlayerUser = new HashMap <Player, User>();
 	
 	public Map <Player, Integer> TasksSun = new HashMap <Player, Integer>();
@@ -59,7 +60,6 @@ public class GuildsBasic extends JavaPlugin  {
 	public Map <Player, Integer> TasksLand = new HashMap <Player, Integer>();
 	public Map <Player, Integer> TasksMoon = new HashMap <Player, Integer>();
 	public Map <Player, Integer> BaseDelay = new HashMap <Player, Integer>();
-	public Map <Player, Integer> TasksInvisible = new HashMap <Player, Integer>();
 	public Map <Player, Integer> TasksAltitude = new HashMap <Player, Integer>();
 	
 	public List <Guild> GuildsList = new ArrayList <Guild>();
@@ -115,11 +115,12 @@ public class GuildsBasic extends JavaPlugin  {
         PlayerUser.clear();
 
         for (Player p : Bukkit.getOnlinePlayers()) {
-    		PlayerUser.put(p, new User(p));
+    		PlayerUser.put(p, newPlayerUser(p));
     		Guild g = getPlayerGuild(p);
     		World w = p.getWorld();
     		Biome b = p.getLocation().getBlock().getBiome();
     		if (g != null) {
+    			g.addOnline();
     			if (g.getWorlds().contains(w) && g.getBiomes().contains(b)) {
     				Proficiency MAX_HEALTH = g.getProficiency(ProficiencyType.MAX_HEALTH);
     				if (MAX_HEALTH.getActive()) {
@@ -152,6 +153,19 @@ public class GuildsBasic extends JavaPlugin  {
 			saveResource(file, false);
 		}
 		
+	}
+	
+	public Long getPlayerJoined(Player p) {
+		if (PlayerJoined.get(p.getName()) != null)
+			return PlayerJoined.get(p.getName());
+		else
+			return 0L;
+	}
+	
+	public void setPlayerJoined(Player p, Long l) {
+		if (PlayerJoined.get(p.getName()) != null)
+			PlayerJoined.remove(p.getName());
+		PlayerJoined.put(p.getName(), l);
 	}
 	
 	public User getPlayerUser(Player p) {		
@@ -517,6 +531,12 @@ public class GuildsBasic extends JavaPlugin  {
 		
 	}
 	
+	public User newPlayerUser(Player p) {
+
+		return new User(p);
+		
+	}
+	
 	public void loadPlayers() {
 		
 		sendConsole("Loading players.yml");
@@ -540,12 +560,14 @@ public class GuildsBasic extends JavaPlugin  {
 			for (String str : p) {
 				Guild gld = null;
 				for (Guild g : GuildsList) {
-					if (g.getName().equalsIgnoreCase(PlayersConfig.getString(str))) gld = g;
+					if (g.getName().equalsIgnoreCase(PlayersConfig.getString(str + ".Guild"))) gld = g;
 				}
 				if (gld == null) {
-					PlayerGuild.put(str, null);	
+					PlayerGuild.put(str, null);
+					PlayerJoined.put(str, 0L);
 				} else {
 					PlayerGuild.put(str, gld);
+					PlayerJoined.put(str, PlayersConfig.getLong(str + ".Joined", 0L));
 				}
 			}
 		}
@@ -575,13 +597,23 @@ public class GuildsBasic extends JavaPlugin  {
 			String key = null;
 			String value = null;
 			for (Map.Entry<String, Guild> p : PlayerGuild.entrySet()) {
-				key = p.getKey();
+				key = p.getKey() + ".Guild";
 				if (p.getValue() == null) {
 					value = null;
 				} else {
 					value = p.getValue().getName();
 				}
 				PlayersConfig.set(key, value);
+			}
+			Long lng = 0L;
+			for (Map.Entry<String, Long> p : PlayerJoined.entrySet()) {
+				key = p.getKey() + ".Joined";
+				if (p.getValue() == null) {
+					lng = null;
+				} else {
+					lng = p.getValue();
+				}
+				PlayersConfig.set(key, lng);
 			}
 		}
 		
@@ -667,10 +699,11 @@ public class GuildsBasic extends JavaPlugin  {
 	
 	public void hidePlayer(Player p) {
 		for (Player online : Bukkit.getOnlinePlayers()) {
-			if (!getPlayerGuild(p).getProficiency(ProficiencyType.SEE_INVISIBLE).getActive()) online.hidePlayer(p);
-		}
-		if (!TasksInvisible.containsKey(p)) {
-			TasksInvisible.put(p, new Scheduler(this).invisible(p));
+			if (!online.equals(p)) {
+				if (!getPlayerGuild(online).getProficiency(ProficiencyType.SEE_INVISIBLE).getActive()) {
+					online.hidePlayer(p);
+				}
+			}
 		}
 	}
 		

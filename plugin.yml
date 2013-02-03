@@ -1,6 +1,6 @@
 name: GuildsBasic
 main: me.avocardo.guilds.GuildsBasic
-version: 2.2.6
+version: 2.2.7
 commands:
   guilds:
     description: Various commands for Guilds.
@@ -13,6 +13,8 @@ permissions:
         description: Gives access to all guilds commands
         children:
             guilds.admin.kick: true
+            guilds.admin.settings: true
+            guilds.admin.messages: true
             guilds.user.join: true
             guilds.user.list: true
             guilds.admin.add: true
@@ -28,6 +30,7 @@ permissions:
         description: Gives access to all guilds admin commands
         children:
             guilds.admin.kick: true
+            guilds.admin.settings: true
             guilds.admin.add: true
             guilds.admin.remove: true
             guilds.admin.create: true
@@ -43,6 +46,12 @@ permissions:
             guilds.user.list: true
             guilds.user.leave: true
     guilds.admin.kick:
+        description: Permission
+        default: op
+    guilds.admin.settings:
+        description: Permission
+        default: op
+    guilds.admin.messages:
         description: Permission
         default: op
     guilds.admin.leave:

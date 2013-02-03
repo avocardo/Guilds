@@ -70,11 +70,12 @@ public class PlayerListener implements Listener {
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		Player p = event.getPlayer();
-		GuildsBasic.PlayerUser.put(p, new User(p));
+		GuildsBasic.PlayerUser.put(p, GuildsBasic.newPlayerUser(p));
 		Guild g = GuildsBasic.getPlayerGuild(p);
 		World w = p.getWorld();
 		Biome b = p.getLocation().getBlock().getBiome();
 		if (g != null) {
+			g.addOnline();
 			if (g.getWorlds().contains(w) && g.getBiomes().contains(b)) {
 				Proficiency MAX_HEALTH = g.getProficiency(ProficiencyType.MAX_HEALTH);
 				if (MAX_HEALTH.getActive()) {
@@ -117,8 +118,14 @@ public class PlayerListener implements Listener {
 				GuildsBasic.BaseDelay.remove(p);
 			}
 		}
-		if (GuildsBasic.PlayerUser.containsKey(p))
+		
+		Guild g = GuildsBasic.getPlayerGuild(p);
+		
+		if (g != null) g.subtractOnline();
+		
+		if (GuildsBasic.PlayerUser.containsKey(p)) {
 			GuildsBasic.PlayerUser.remove(p);
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
@@ -430,11 +437,7 @@ public class PlayerListener implements Listener {
 					}
 				}
 			} else {
-				if (GuildsBasic.TasksInvisible.containsKey(p)) {
-					Bukkit.getScheduler().cancelTask(GuildsBasic.TasksInvisible.get(p));
-					GuildsBasic.TasksInvisible.remove(p);
-					GuildsBasic.showPlayer(p);
-				}
+				GuildsBasic.showPlayer(p);
 			}
 		}
 		
@@ -450,11 +453,13 @@ public class PlayerListener implements Listener {
 			if (!GuildsBasic.getEnabled(Settings.ENABLE_ENEMY_ENTER_PROTECTION_BARRIER)) {
 				for (Guild guild : GuildsBasic.GuildsList) {
 					if (!guild.equals(g)) {
-						if (event.getFrom().distance(guild.getBase()) > event.getTo().distance(guild.getBase())) {
-							if (p.getLocation().distance(guild.getBase()) <= (GuildsBasic.getIntSetting(Settings.SET_PROTECTION_BARRIER) + 1)) {
-								event.setCancelled(true);
-								new Message(MessageType.PROTECTED_BARRIER_WARNING, p, g, GuildsBasic);
-								return;
+						if (guild.getBase().getWorld() == event.getTo().getWorld()) {
+							if (event.getFrom().distance(guild.getBase()) > event.getTo().distance(guild.getBase())) {
+								if (p.getLocation().distance(guild.getBase()) <= (GuildsBasic.getIntSetting(Settings.SET_PROTECTION_BARRIER) + 1)) {
+									event.setCancelled(true);
+									new Message(MessageType.PROTECTED_BARRIER_WARNING, p, g, GuildsBasic);
+									return;
+								}
 							}
 						}
 					}
@@ -535,8 +540,8 @@ public class PlayerListener implements Listener {
 					}
 				}
 				if (STORM.getActive()) {
-					if ((p.getWorld().getBlockAt(p.getLocation()).getLightFromSky()) > 8) {
-						if (p.getWorld().hasStorm() == true) {
+					if (p.getWorld().hasStorm() == true) {
+						if (p.getWorld().getHighestBlockAt(p.getLocation().getBlock().getLocation()).getY() <= p.getLocation().getBlock().getLocation().getY()) {
 							if (!GuildsBasic.TasksStorm.containsKey(p)) {
 								GuildsBasic.TasksStorm.put(p, new Scheduler(GuildsBasic).storm(p));
 							}
@@ -737,6 +742,25 @@ public class PlayerListener implements Listener {
 							p.getInventory().setItemInHand(new ItemStack(0));
 							p.setItemInHand(new ItemStack(0));
 							event.setCancelled(true);
+						}
+					}
+				}
+				if (GuildsBasic.getEnabled(Settings.ENABLE_GUILD_PROTECTION_BARRIER)) {
+					if (GuildsBasic.getEnabled(Settings.ENABLE_ENEMY_ENTER_PROTECTION_BARRIER)) {
+						for (Guild guild : GuildsBasic.GuildsList) {
+							if (GuildsBasic.getEnabled(Settings.ENABLE_GUILD_PROTECTION_BARRIER_VOID)) {
+								if (guild.getOnline() >= GuildsBasic.getIntSetting(Settings.SET_PROTECTION_BARRIER_VOID)) {
+									continue;
+								}
+							}
+							Location base = guild.getBase();
+							if (base.getWorld().equals(p.getWorld())) {
+								if (base.distance(p.getLocation()) > (double) GuildsBasic.getIntSetting(Settings.SET_PROTECTION_BARRIER)) {
+									continue;
+								} else {
+									event.setCancelled(true);
+								}
+							}
 						}
 					}
 				}

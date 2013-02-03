@@ -34,10 +34,18 @@ public class CommandAdd {
 				Guild g = GuildsBasic.getGuild(args[2]);
 				if (p != null) {
 					if (g != null) {
+						if (GuildsBasic.getPlayerGuild(p) != null) {
+							GuildsBasic.getPlayerGuild(p).subtractOnline();
+						}
 						if (GuildsBasic.PlayerGuild.containsKey(p.getName())) {
 							GuildsBasic.PlayerGuild.remove(p.getName());
 						}
+						if (GuildsBasic.PlayerJoined.containsKey(p.getName())) {
+							GuildsBasic.PlayerJoined.remove(p.getName());
+						}
+						g.addOnline();
 						GuildsBasic.PlayerGuild.put(p.getName(), g);
+						GuildsBasic.PlayerJoined.put(p.getName(), System.currentTimeMillis());
 						GuildsBasic.savePlayers();
 						GuildsBasic.loadPlayers();
 						GuildsBasic.clearPlayerScheduler(player);
@@ -66,10 +74,18 @@ public class CommandAdd {
 			Guild g = GuildsBasic.getGuild(args[2]);
 			if (p != null) {
 				if (g != null) {
+					if (GuildsBasic.getPlayerGuild(p) != null) {
+						GuildsBasic.getPlayerGuild(p).subtractOnline();
+					}
 					if (GuildsBasic.PlayerGuild.containsKey(p)) {
 						GuildsBasic.PlayerGuild.remove(p);
 					}
+					if (GuildsBasic.PlayerJoined.containsKey(p.getName())) {
+						GuildsBasic.PlayerJoined.remove(p.getName());
+					}
+					g.addOnline();
 					GuildsBasic.PlayerGuild.put(p.getName(), g);
+					GuildsBasic.PlayerJoined.put(p.getName(), System.currentTimeMillis());
 					GuildsBasic.savePlayers();
 					GuildsBasic.loadPlayers();
 					GuildsBasic.clearPlayerScheduler(p);

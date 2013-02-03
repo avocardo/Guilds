@@ -21,6 +21,8 @@ public enum MessageType {
 	WATER("&eWater!"),
 	ALTITUDE("&eAltitude!"),
 	COMMAND_SETBASE("&emissing parameters... /guilds setbase <guild>"),
+	COMMAND_SETTING("&emissing parameters... /guilds setting <setting> <value>"),
+	COMMAND_MESSAGE("&emissing parameters... /guilds message <message> <value>"),
 	COMMAND_REMOVE("&emissing parameters... /guilds remove <guild>"),
 	COMMAND_CREATE("&emissing parameters... /guilds create <guild>"),
 	COMMAND_KICK("&emissing parameters... /guilds kick <player>"),
@@ -43,7 +45,15 @@ public enum MessageType {
 	YOU_REMOVED_FROM_GUILD("&eyou were removed from your guild..."),
 	GUILD_NOT_RECOGNISED("&eguild /g/ not recognised..."),
 	PLAYER_NOT_RECOGNISED("&eplayer /p/ not recognised..."),
-	CONSOLE_ERROR("command not supported by console...");
+	CONSOLE_ERROR("&ecommand not supported by console..."),
+	SETTING_NOT_RECOGNISED("&e/s/ not recognised..."),
+	SETTING_SET("&e/s/ set to /v/"),
+	NOT_BOOLEAN("&ethe value you entered is not true/false..."),
+	NOT_INT("&ethe value you entered is not a number..."),
+	MESSAGE_NOT_RECOGNISED("&e/m/ not recognised..."),
+	MESSAGE_SET("&e/m/ set to /v/"),
+	CHANGE_TIME("&e/t/ seconds before you can change guild..."),
+	COMMAND_NOT_RECOGNISED("&e/guilds /a/ not recognised...");
     
     String str;
    

@@ -26,17 +26,6 @@ public class Scheduler {
 		return i;
 	}
 	
-	public int invisible(final Player p) {
-		int i = GuildsBasic.getServer().getScheduler().scheduleSyncRepeatingTask(GuildsBasic, new Runnable() {
-			public void run() {
-				if (!p.isSneaking()) {
-					GuildsBasic.showPlayer(p);
-				}
-			}
-		}, 0L, 50L);
-		return i;
-	}
-	
 	public int sun(final Player p) {
 		int i = GuildsBasic.getServer().getScheduler().scheduleSyncRepeatingTask(GuildsBasic, new Runnable() {
 			public void run() {

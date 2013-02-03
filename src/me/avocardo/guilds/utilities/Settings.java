@@ -35,6 +35,11 @@ public enum Settings {
 		this.Setting = Setting;
 	}
 	
+	public boolean findSettings(String str) {
+		if (this.toString().equalsIgnoreCase(str)) return true;
+		return false;
+	}
+	
 	public void setSetting(Object Setting) {
 		this.Setting = Setting;
 	}

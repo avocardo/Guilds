@@ -12,6 +12,8 @@ import org.bukkit.block.Biome;
 
 public class Guild {
 	
+	private int ONLINE;
+	
 	private String NAME;
 	private String COLOR;
 	private String PLAYER_PREFIX;
@@ -39,6 +41,18 @@ public class Guild {
 	
 	public List<Integer> getRestrictions() {
 		return RESTRICTIONS;
+	}
+	
+	public int getOnline() {
+		return ONLINE;
+	}
+	
+	public void addOnline() {
+		ONLINE++;
+	}
+	
+	public void subtractOnline() {
+		ONLINE--;
 	}
 	
 	public void addRestriction(int i) {

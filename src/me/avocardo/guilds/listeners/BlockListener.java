@@ -197,8 +197,14 @@ public class BlockListener implements Listener {
 		if (!GuildsBasic.getEnabled(Settings.ENABLE_GUILD_PROTECTION_BARRIER)) {
 			return true;
 		}
-		
+
 		for (Guild g : GuildsBasic.GuildsList) {
+
+			if (GuildsBasic.getEnabled(Settings.ENABLE_GUILD_PROTECTION_BARRIER_VOID)) {
+				if (g.getOnline() >= GuildsBasic.getIntSetting(Settings.SET_PROTECTION_BARRIER_VOID)) {
+					continue;
+				}
+			}
 			
 			Location base = g.getBase();
 			
