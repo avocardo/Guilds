@@ -291,21 +291,22 @@ public class PlayerListener implements Listener {
 		
 		Guild g = GuildsBasic.getPlayerGuild(p);
 		
+		double multiplier = 1;
+		
 		if (g != null) {
 			if (g.getWorlds().contains(p.getWorld()) && g.getBiomes().contains(p.getLocation().getBlock().getBiome())) {
 				Proficiency XP_MULTIPLIER = g.getProficiency(ProficiencyType.XP_MULTIPLIER);
 				if (XP_MULTIPLIER.getActive()) {
-					if (XP_MULTIPLIER.getPower() != (double) 1) {
-						if (XP_MULTIPLIER.getPower() == 0) {
-							event.setAmount(0);
-							return;
-						} else {
-							event.setAmount((int) Math.round((double) event.getAmount() * XP_MULTIPLIER.getPower()));
-							return;
-						}
+					if (XP_MULTIPLIER.getPower() == 0) {
+						event.setAmount(0);
+						return;
+					} else {
+						multiplier = XP_MULTIPLIER.getPower();
 					}
 				}
 			}
+			event.setAmount((int) Math.round((double) event.getAmount() * multiplier));
+			g.setEXP((int) g.getEXP() + (int) Math.round((double) event.getAmount() * multiplier));
 		}
 		
 	}
@@ -370,6 +371,14 @@ public class PlayerListener implements Listener {
 			World w = p.getWorld();
 			Biome b = p.getLocation().getBlock().getBiome();
 			if (g != null) {
+				Player Killer = p.getKiller();
+				if (Killer != null) {
+					Guild gld = GuildsBasic.getPlayerGuild(Killer);
+					if (gld != null) {
+						gld.setKILLS(gld.getKILLS() + 1);
+						g.setDEATHS(g.getDEATHS() + 1);
+					}
+				}
 				if (g.getWorlds().contains(w) && g.getBiomes().contains(b)) {
 					Proficiency EXPLODEDEATH = g.getProficiency(ProficiencyType.EXPLODEDEATH);
 					Proficiency RECOVEREXP = g.getProficiency(ProficiencyType.RECOVEREXP);

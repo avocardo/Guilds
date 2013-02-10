@@ -19,6 +19,12 @@ public class Guild {
 	private String PLAYER_PREFIX;
 	private String PLAYER_SUFFIX;
 	
+	private int KILLS;
+	private int DEATHS;
+	private int EXP;
+	
+	private double RATIO;
+	
 	private Location LOCATION;
 	
 	private List<Integer> RESTRICTIONS = new ArrayList<Integer>();	
@@ -59,6 +65,10 @@ public class Guild {
 		RESTRICTIONS.add(i);
 	}
 	
+	public void removeRestriction(int i) {
+		RESTRICTIONS.remove(new Integer(i));
+	}
+	
 	public List<World> getWorlds() {
 		return WORLDS;
 	}
@@ -67,12 +77,20 @@ public class Guild {
 		WORLDS.add(w);
 	}
 	
+	public void removeWorld(World w) {
+		WORLDS.remove(w);
+	}
+	
 	public List<Biome> getBiomes() {
 		return BIOMES;
 	}
 	
 	public void addBiome(Biome b) {
 		BIOMES.add(b);
+	}
+	
+	public void removeBiome(Biome b) {
+		BIOMES.remove(b);
 	}
 	
 	public List<Proficiency> getProficiencies() {
@@ -132,6 +150,47 @@ public class Guild {
 
 	public void setPlayerSuffix(String PLAYER_SUFFIX) {
 		this.PLAYER_SUFFIX = PLAYER_SUFFIX;
+	}
+
+	public int getKILLS() {
+		return KILLS;
+	}
+
+	public void setKILLS(int KILLS) {
+		this.KILLS = KILLS;
+		setRATIO();
+	}
+
+	public int getDEATHS() {
+		return DEATHS;
+	}
+
+	public void setDEATHS(int DEATHS) {
+		this.DEATHS = DEATHS;
+		setRATIO();
+	}
+
+	public int getEXP() {
+		return EXP;
+	}
+
+	public void setEXP(int EXP) {
+		this.EXP = EXP;
+	}
+
+	public double getRATIO() {
+		return RATIO;
+	}
+	
+	private void setRATIO() {
+		if (KILLS == 0 && DEATHS == 0)
+			this.RATIO = (double) 0.00;
+		else if (KILLS == 0 && DEATHS != 0)
+			this.RATIO = (double) 0.00;
+		else if (KILLS != 0 && DEATHS == 0)
+			this.RATIO = (double) ((double) KILLS / (double) (DEATHS + 1));
+		else
+			this.RATIO = (double) ((double) KILLS / (double) DEATHS);
 	}
 
 }

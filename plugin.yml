@@ -1,6 +1,6 @@
 name: GuildsBasic
 main: me.avocardo.guilds.GuildsBasic
-version: 2.2.7
+version: 2.2.8
 commands:
   guilds:
     description: Various commands for Guilds.
@@ -13,9 +13,13 @@ permissions:
         description: Gives access to all guilds commands
         children:
             guilds.admin.kick: true
+            guilds.admin.proficiency: true
+            guilds.admin.toggle: true
             guilds.admin.settings: true
+            guilds.admin.setting: true
             guilds.admin.messages: true
             guilds.user.join: true
+            guilds.user.leaderboard: true
             guilds.user.list: true
             guilds.admin.add: true
             guilds.admin.remove: true
@@ -30,7 +34,10 @@ permissions:
         description: Gives access to all guilds admin commands
         children:
             guilds.admin.kick: true
+            guilds.admin.proficiency: true
+            guilds.admin.toggle: true
             guilds.admin.settings: true
+            guilds.admin.setting: true
             guilds.admin.add: true
             guilds.admin.remove: true
             guilds.admin.create: true
@@ -42,6 +49,7 @@ permissions:
         description: Gives access to all guilds user commands
         children:
             guilds.user.join: true
+            guilds.user.leaderboard: true
             guilds.user.base: true
             guilds.user.list: true
             guilds.user.leave: true
@@ -49,6 +57,12 @@ permissions:
         description: Permission
         default: op
     guilds.admin.settings:
+        description: Permission
+        default: op
+    guilds.admin.toggle:
+        description: Permission
+        default: op
+    guilds.admin.setting:
         description: Permission
         default: op
     guilds.admin.messages:
@@ -66,6 +80,9 @@ permissions:
     guilds.admin.remove:
         description: Permission
         default: op
+    guilds.admin.proficiency:
+        description: Permission
+        default: op
     guilds.admin.create:
         description: Permission
         default: op
@@ -73,6 +90,9 @@ permissions:
         description: Permission
         default: op
     guilds.user.base:
+        description: Permission
+        default: true
+    guilds.user.leaderboard:
         description: Permission
         default: true
     guilds.admin.protectionbarrier:

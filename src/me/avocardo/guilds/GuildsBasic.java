@@ -358,10 +358,16 @@ public class GuildsBasic extends JavaPlugin  {
 			guild.setColor(GuildsConfig.getString(str + ".Settings.Color", ""));
 			guild.setPlayerPrefix(GuildsConfig.getString(str + ".Settings.Prefix", ""));
 			guild.setPlayerSuffix(GuildsConfig.getString(str + ".Settings.Suffix", ""));
+			guild.setKILLS(GuildsConfig.getInt(str + ".Settings.Kills", 0));
+			guild.setDEATHS(GuildsConfig.getInt(str + ".Settings.Deaths", 0));
+			guild.setEXP(GuildsConfig.getInt(str + ".Settings.Exp", 0));
 		} else {
 			guild.setColor(GuildsConfig.getString(str + ".settings.color", ""));
 			guild.setPlayerPrefix(GuildsConfig.getString(str + ".settings.prefix", ""));
 			guild.setPlayerSuffix(GuildsConfig.getString(str + ".settings.suffix", ""));
+			guild.setKILLS(GuildsConfig.getInt(str + ".settings.Kills", 0));
+			guild.setDEATHS(GuildsConfig.getInt(str + ".settings.Deaths", 0));
+			guild.setEXP(GuildsConfig.getInt(str + ".settings.Exp", 0));
 		}
 		
 		path = str + ".Base";
@@ -479,6 +485,9 @@ public class GuildsBasic extends JavaPlugin  {
 				GuildsConfig.set(name + ".Settings.Color", g.getColor());
 				GuildsConfig.set(name + ".Settings.Prefix", g.getPlayerPrefix());
 				GuildsConfig.set(name + ".Settings.Suffix", g.getPlayerSuffix());
+				GuildsConfig.set(name + ".Settings.Kills", g.getKILLS());
+				GuildsConfig.set(name + ".Settings.Deaths", g.getDEATHS());
+				GuildsConfig.set(name + ".Settings.Exp", g.getEXP());
 								
 				for (Proficiency p : g.getProficiencies()) {
 					GuildsConfig.set(name + ".Proficiencies." + p.getProficiencyType().toString() + ".Active", p.getActive());
@@ -661,7 +670,7 @@ public class GuildsBasic extends JavaPlugin  {
 	}
 
 	public void clearScheduler() {
-		Bukkit.getScheduler().cancelAllTasks();
+		Bukkit.getScheduler().cancelTasks(this);
 	}
 	
 	public void clearPlayerScheduler(Player p) {

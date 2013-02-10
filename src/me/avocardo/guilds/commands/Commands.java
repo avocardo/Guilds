@@ -1,6 +1,5 @@
 package me.avocardo.guilds.commands;
 
-import me.avocardo.guilds.Guild;
 import me.avocardo.guilds.GuildsBasic;
 import me.avocardo.guilds.messages.Console;
 import me.avocardo.guilds.messages.Message;
@@ -22,11 +21,7 @@ public class Commands implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		
 		if (label.equalsIgnoreCase("guilds")) {
-			
-			for (Guild g : GuildsBasic.GuildsList) {
-				GuildsBasic.sendConsole(g.getName() + " " + g.getOnline());
-			}
-			
+						
 			if (args.length > 0) {
 					
 				if (args[0].equalsIgnoreCase("list")) {
@@ -70,11 +65,39 @@ public class Commands implements CommandExecutor {
 				}
 				
 				else if (args[0].equalsIgnoreCase("setting")) {
+					new CommandSetting(sender, args, GuildsBasic);
+				}
+				
+				else if (args[0].equalsIgnoreCase("settings")) {
 					new CommandSettings(sender, args, GuildsBasic);
 				}
 				
 				else if (args[0].equalsIgnoreCase("message")) {
 					new CommandMessage(sender, args, GuildsBasic);
+				}
+				
+				else if (args[0].equalsIgnoreCase("leaderboard")) {
+					new CommandLeaderBoard(sender, args, GuildsBasic);
+				}
+				
+				else if (args[0].equalsIgnoreCase("proficiency")) {
+					new CommandProficiency(sender, args, GuildsBasic);
+				}
+				
+				else if (args[0].equalsIgnoreCase("toggle")) {
+					new CommandToggle(sender, args, GuildsBasic);
+				}
+				
+				else if (args[0].equalsIgnoreCase("world")) {
+					new CommandWorld(sender, args, GuildsBasic);
+				}
+				
+				else if (args[0].equalsIgnoreCase("biome")) {
+					new CommandBiome(sender, args, GuildsBasic);
+				}
+				
+				else if (args[0].equalsIgnoreCase("restrictions")) {
+					new CommandRestrictions(sender, args, GuildsBasic);
 				}
 				
 				else {
